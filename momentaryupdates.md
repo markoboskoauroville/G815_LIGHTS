@@ -49,3 +49,13 @@ painted yellow on screen; "Saving Not Supported".
     yellow as on the keyboard (the active one lit). Match the camera picture as closely as possible. — **Status:** open
 14. A native Swift app, the only face; no web page. — **Status:** open (this replaces the page and the
     Hammerspoon server; the star's row will start the Swift app)
+
+## 2.10.2026, 03:20 — permission given; test, login agent, OpenRGB out, the rest
+
+> Add the permission test all the keyboard. Add the login agent. Okay, I already changed the permissions, so please test it. Open RGB starting automatically, yes. Remove and do all other points. That's great.
+
+15. Input Monitoring granted by Marko: test everything on the real keyboard. — **Status:** started
+16. The login agent (paints at every start, no window). — **Status:** open
+17. OpenRGB out of the login items (he said yes). — **Status:** open
+18. "All other points": app icon, documents (README, TAKEOVER, LESSONS), registry, handover; then the camera's
+    white balance and the MIDI apps as Swift-only. — **Status:** open
