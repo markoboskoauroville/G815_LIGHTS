@@ -59,3 +59,7 @@ painted yellow on screen; "Saving Not Supported".
 17. OpenRGB out of the login items (he said yes). — **Status:** open
 18. "All other points": app icon, documents (README, TAKEOVER, LESSONS), registry, handover; then the camera's
     white balance and the MIDI apps as Swift-only. — **Status:** open
+
+> (2.10.2026, 03:30) Please remove this glowing effect from my keyboard application. Colors are good, but you don't need to really to use glow. Should be clear.
+
+19. No glow on the legends: clear lit letters in the key's colour. — **Status:** done in v2

@@ -1,12 +1,13 @@
 // Views.swift — the window. The CAMERA language (MANTRA_MANIFEST modules/language-camera.md): words, not
 // boxes; green = on, grey = off, amber = armed/chosen. The drawing is the keyboard as it is in the room
 // (Marko, 2.10.2026: "my keyboard is black, so keys should be black with lights on ... memory buttons are
-// yellow"): black caps on a black body, each legend lit in its key's own colour; M1 M2 M3 MR yellow, the
+// yellow"): black caps on a black body, each legend in its key's own colour, clear and with no glow ("you
+// don't need to really to use glow. Should be clear", v2); M1 M2 M3 MR yellow, the
 // active bank bright. The key's colour is content, so a chosen key is shown by an amber ring only.
 
 import SwiftUI
 
-let VERSION = 1
+let VERSION = 4
 
 extension Color {
     init(hex: String) {
@@ -94,7 +95,6 @@ struct Board: View {
             Text(k.l)
                 .font(mono(k.l.count > 3 ? max(7, u * 0.18) : max(9, u * 0.3)))
                 .foregroundColor(dark ? Color(hex: "26272A") : lit)
-                .shadow(color: dark ? .clear : lit.opacity(0.9), radius: u * 0.12)
                 .lineLimit(1).minimumScaleFactor(0.5).padding(2)
             if chosen { RoundedRectangle(cornerRadius: 5).strokeBorder(Color.amber, lineWidth: 2) }
         }
@@ -107,7 +107,6 @@ struct Board: View {
         return ZStack {
             RoundedRectangle(cornerRadius: 5).fill(Color.cap)
             Text(b.l).font(mono(max(9, u * 0.3))).foregroundColor(col)
-                .shadow(color: active ? Color.bankYellow.opacity(0.9) : .clear, radius: u * 0.14)
         }
         .frame(width: u - 4, height: u - 4)
     }
@@ -159,7 +158,7 @@ struct Word: View {
     let act: () -> Void
     var body: some View {
         Button(action: act) { Text(text).font(mono(size)).tracking(0.5).foregroundColor(state) }
-            .buttonStyle(.plain).padding(.horizontal, 5).padding(.vertical, 3)
+            .buttonStyle(.plain).focusable(false).padding(.horizontal, 5).padding(.vertical, 3)
     }
 }
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- G815 Lights at login: the app with no window, which paints the active bank and stays to paint again
+     after sleep, a replug, or an M key. Installed by install.sh into ~/Library/LaunchAgents. -->
+<plist version="1.0"><dict>
+<key>Label</key><string>community.auroville.g815lights</string>
+<key>ProgramArguments</key><array>
+  <string>/Users/markobosko/Developer/G815_LIGHTS/build/G815 Lights.app/Contents/MacOS/G815Lights</string>
+  <string>--background</string>
+</array>
+<key>RunAtLoad</key><true/>
+<key>ProcessType</key><string>Interactive</string>
+</dict></plist>

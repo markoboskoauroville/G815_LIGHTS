@@ -15,6 +15,21 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var poll: Timer?
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        // ONE COPY ONLY: two would fight over the keyboard (MEASURED 2.10.2026: the login agent's copy and one
+        // started by macOS's "Quit & Reopen" ran side by side). A second copy asks the first to show its window
+        // and goes; the first listens for that.
+        let me = ProcessInfo.processInfo.processIdentifier
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: "community.auroville.g815lights")
+            .filter { $0.processIdentifier != me }
+        if !others.isEmpty {
+            if !CommandLine.arguments.contains("--background") {
+                DistributedNotificationCenter.default().postNotificationName(.init("community.auroville.g815lights.show"), object: nil, userInfo: nil, deliverImmediately: true)
+            }
+            exit(0)
+        }
+        DistributedNotificationCenter.default().addObserver(forName: .init("community.auroville.g815lights.show"), object: nil, queue: .main) { [weak self] _ in
+            self?.show()
+        }
         // the G815's light interface sits beside its keys, so macOS asks for Input Monitoring; this shows
         // the system's own question once (System Settings > Privacy & Security > Input Monitoring)
         if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) != kIOHIDAccessTypeGranted {
@@ -24,6 +39,8 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             store = Store()
             store.paintAll()
             store.choose(store.s.active)
+            // every bank in the keyboard brought in line with the Mac's; a bank already so is not written
+            for i in 1...3 { store.writeBank(i) }
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.store.poll() }
             }

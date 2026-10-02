@@ -27,7 +27,8 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PL
-# ad hoc, but with a designated requirement that names the bundle, not this build's hash: macOS keeps
-# the Input Monitoring permission across rebuilds instead of asking again every time
-codesign --force -s - -r='designated => identifier "community.auroville.g815lights"' "$APP" >/dev/null 2>&1
+# signed with "Mantra Apps", the self-signed certificate in the login keychain (2.10.2026): macOS ties a
+# permission (Input Monitoring) to the signer, not to one build, so it survives every rebuild. An ad hoc
+# signature is pinned to its hash and lost its permission at the first rebuild (LESSONS.md).
+codesign --force -s "Mantra Apps" "$APP"
 echo "built build/g815 and $APP (v$V)"
