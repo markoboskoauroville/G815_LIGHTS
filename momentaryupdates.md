@@ -40,3 +40,12 @@ painted yellow on screen; "Saving Not Supported".
     the keyboard; pressing M1..M3 on the real keyboard switches the page too. — **Status:** started
 12. Every change is kept under the active bank on the Mac and written into that bank of the keyboard by itself
     (no WRITE button); the keyboard's bank holds one still colour per zone (its limit), the Mac the per-key colours. — **Status:** started
+
+## 2.10.2026, 03:15 — the drawing looks like the real keyboard, and Swift only
+
+> please match exactly the keyboard view to the real keyboard. So my keyboard is black, so keys should be black with lights on. Also, these memory buttons are yellow on the keyboard, so please you have a screenshot and the look in real life should match as close as possible to the view in our app. Also, build a Swift app. Swiftapp should be the default, and then web app is the second. Actually, you don't need to build with webapp at all. We just can focus on Swift. There is no need for web apps anymore. Swift is great and we work with Swift only now
+
+13. The drawing as the real keyboard: black keycaps, the legend lit in the key's colour; the M1 M2 M3 keys
+    yellow as on the keyboard (the active one lit). Match the camera picture as closely as possible. — **Status:** open
+14. A native Swift app, the only face; no web page. — **Status:** open (this replaces the page and the
+    Hammerspoon server; the star's row will start the Swift app)

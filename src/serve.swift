@@ -4,6 +4,7 @@
 //
 //   paint 26:ff0000 27:00ff00 ...     colours, then one commit
 //   bright [0-100]                    the keyboard's own brightness (the button's), read or set
+//   profile <1|2|3>                   switch the keyboard's bank (its M1..M3)
 //   status                            connected, serial, brightness, onboard mode and profile
 //   onboard <1|2|3|all> <keys> <logo> one still colour per zone into the keyboard's memory
 
@@ -41,6 +42,11 @@ func serve() {
             case "bright":
                 if w.count > 1, let v = Int(w[1]) { try k.setBrightness(max(0, min(100, v))) }
                 reply(["ok": true, "brightness": try k.brightness()])
+            case "profile":
+                // the keyboard's own bank, as its M1..M3 keys choose it
+                guard w.count == 2, let n = Int(w[1]), (1...3).contains(n) else { reply(["ok": false, "error": "profile 1|2|3"]); continue }
+                try k.call(try k.need(0x8100), 3, [0, UInt8(n)])
+                reply(["ok": true, "profile": n])
             case "status":
                 let ob = try k.need(0x8100)
                 reply(["ok": true, "connected": true, "serial": k.serial, "brightness": try k.brightness(),

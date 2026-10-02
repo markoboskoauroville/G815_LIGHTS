@@ -29,6 +29,11 @@
   .key { position:absolute; border-radius:5px; display:flex; align-items:center; justify-content:center;
          font-size:10px; font-weight:700; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
   .key.sel { box-shadow:0 0 0 2px var(--amber); z-index:2; }
+  /* the bank keys: words like the CAMERA's keys, the active bank green, never a colour of content */
+  .bank { position:absolute; display:flex; align-items:center; justify-content:center; font-weight:700;
+          font-size:15px; letter-spacing:.06em; color:var(--grey); cursor:pointer; }
+  .bank:hover { color:var(--sand); }
+  .bank.on { color:var(--green); }
   .bar { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
   .cols { display:grid; grid-template-columns:330px 1fr; gap:26px; }
   .panel { margin-bottom:16px; }
@@ -59,6 +64,14 @@
   <span class="whisper" id="status"><span class="dot"></span>looking for the keyboard</span>
   <span style="flex:1"></span>
   <span class="whisper" id="ver"></span>
+</div>
+
+<div class="bar" style="margin-top:14px">
+  <span class="label" style="margin:0 6px 0 0">BANK</span>
+  <button class="w" id="b1" onclick="verb({a:'memory',i:1})">M1</button>
+  <button class="w" id="b2" onclick="verb({a:'memory',i:2})">M2</button>
+  <button class="w" id="b3" onclick="verb({a:'memory',i:3})">M3</button>
+  <span class="whisper" id="banksaid" style="margin-left:10px"></span>
 </div>
 
 <div id="board"></div>
@@ -105,34 +118,14 @@
       </div>
     </div>
     <div class="panel">
-      <div class="label">MEMORIES</div>
-      <div class="bar" id="memories"></div>
-      <div class="bar" style="margin-top:6px">
-        <input type="text" id="mname" maxlength="24">
-        <button class="w" onclick="verb({a:'memoryName', name:val('mname')})">RENAME</button>
-        <button class="w" onclick="verb({a:'memoryNew'})">+ NEW</button>
-        <button class="w" id="mdel" onclick="memDelete()">DELETE</button>
-      </div>
-    </div>
-    <div class="panel">
       <div class="label">KEYBOARD BRIGHTNESS</div>
       <div class="fader"><input type="range" id="gb" min="0" max="100"><span class="val" id="gbv"></span></div>
-    </div>
-    <div class="panel">
-      <div class="label">POWER-ON (THE KEYBOARD'S OWN MEMORY, M1 M2 M3)</div>
-      <div class="bar">
-        <span class="whisper">KEYS</span><span class="sw" id="pk" style="width:18px;height:18px"></span>
-        <span class="whisper" style="margin-left:8px">LOGO</span><span class="sw" id="pl" style="width:18px;height:18px"></span>
-        <button class="w" id="write" onclick="write_()" style="margin-left:10px">WRITE</button>
-        <button class="w" onclick="verb({a:'repaint'})">PAINT AGAIN</button>
-      </div>
-      <div class="said" id="said"></div>
     </div>
   </div>
 </div>
 
 <script>
-let S = null, L = null, sel = new Set(), hsv = [0, 0, 1], keyB = 100, armedDel = false, armedWrite = false;
+let S = null, L = null, sel = new Set(), hsv = [0, 0, 1], keyB = 100;
 const $ = id => document.getElementById(id);
 const val = id => $(id).value;
 
@@ -171,6 +164,13 @@ function build() {
       width: (k.w * U - 4) + 'px', height: (k.h * U - 4) + 'px' });
     d.onmousedown = e => { dragAdd = !sel.has(k.id); dragging = true; toggle(k.id, dragAdd); e.preventDefault(); };
     d.onmouseenter = () => { if (dragging) toggle(k.id, dragAdd); };
+    board.appendChild(d);
+  }
+  for (const m of L.banks) {
+    const d = document.createElement('div');
+    d.className = 'bank'; d.id = 'bank' + m.i; d.textContent = m.l;
+    Object.assign(d.style, { left: (pad + m.x * U) + 'px', top: (pad + m.y * U) + 'px', width: U + 'px', height: U + 'px' });
+    d.onclick = () => verb({ a: 'memory', i: m.i });
     board.appendChild(d);
   }
 }
@@ -258,14 +258,6 @@ function send(now) {
 
 // ---------------------------------------------------------------- presets, memories, brightness, power-on
 function presetSave() { verb({ a: 'presetSave', name: val('pname'), c: rgb2hex(hsv2rgb(...hsv)), b: keyB }); $('pname').value = ''; }
-function memDelete() {
-  if (!armedDel) { armedDel = true; $('mdel').classList.add('armed'); $('mdel').textContent = 'DELETE?'; setTimeout(() => { armedDel = false; draw(); }, 3000); return; }
-  armedDel = false; verb({ a: 'memoryDelete' });
-}
-function write_() {
-  if (!armedWrite) { armedWrite = true; $('write').classList.add('armed'); $('write').textContent = 'WRITE?'; setTimeout(() => { armedWrite = false; draw(); }, 3000); return; }
-  armedWrite = false; verb({ a: 'write' });
-}
 $('gb').oninput = () => { $('gbv').textContent = $('gb').value + '%'; };
 $('gb').onchange = () => verb({ a: 'bright', v: +$('gb').value });
 
@@ -288,16 +280,12 @@ function draw() {
   S.presets.forEach((p, i) => P.appendChild(chip('', shown(p), p.name + (p.b < 100 ? ' ' + p.b + '%' : ''),
     () => { hsv = rgb2hsv(...hex2rgb(p.c)); keyB = p.b; drawPicker(); send(true); },
     () => verb({ a: 'presetDelete', i: i + 1 }))));
-  const Mm = $('memories'); Mm.innerHTML = '';
-  S.memories.forEach((n, i) => Mm.appendChild(chip(i + 1 === S.active ? 'on' : '', null, n, () => verb({ a: 'memory', i: i + 1 }))));
-  if (document.activeElement !== $('mname')) $('mname').value = S.memories[S.active - 1];
-  $('mdel').className = 'w' + (S.memories.length > 1 ? (armedDel ? ' armed' : '') : ' dead');
-  if (!armedDel) $('mdel').textContent = 'DELETE';
+  for (const i of [1, 2, 3]) {
+    $('b' + i).classList.toggle('on', i === S.active);
+    const k = $('bank' + i); if (k) k.classList.toggle('on', i === S.active);
+  }
+  $('banksaid').textContent = 'in the keyboard: ' + (lv.banks['M' + S.active] || 'as it was');
   if (document.activeElement !== $('gb') && lv.brightness != null) { $('gb').value = lv.brightness; $('gbv').textContent = lv.brightness + '%'; }
-  $('pk').style.background = '#' + S.power.keys; $('pl').style.background = '#' + S.power.logo;
-  $('write').className = 'w' + (armedWrite ? ' armed' : '');
-  if (!armedWrite) $('write').textContent = 'WRITE';
-  $('said').textContent = lv.said || '';
 }
 
 (async () => {
@@ -305,7 +293,9 @@ function draw() {
   S = await (await fetch('/state')).json();
   build(); draw(); drawPicker();
   window.onresize = () => { build(); drawKeys(); };
-  setInterval(async () => { if (dragging) return; const s = await (await fetch('/state')).json(); S.live = s.live; S.power = s.power; draw(); }, 2000);
+  setInterval(async () => { if (dragging) return; const s = await (await fetch('/state')).json();
+    if (s.active !== S.active) { S = s; pickFromSelection(); } else S.live = s.live;
+    draw(); }, 2000);
 })();
 </script>
 </body></html>
