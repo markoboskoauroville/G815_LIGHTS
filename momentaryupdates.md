@@ -23,3 +23,11 @@ painted yellow on screen; "Saving Not Supported".
 7. Write to the keyboard's onboard memory, so it lights his profile from power-on with no light show.
    If the keyboard cannot hold per-key static colours, say so plainly. — **Status:** open (to research)
 8. A row in the star menu; loads with the Mac and re-applies the saved settings at every start. — **Status:** open
+
+## 2.10.2026, 02:20 — see the keyboard through the screen, and the camera's white balance
+
+> Please, I enabled the camera through my screen copy so it's running in a small window. You need to screen capture, not use camera. Actually screen capture on the screen, find the area, and you have the full view and full colors of my keyboard. You can fix it, you can program it, you can do anything now. Also, I'm using my own app. This is my own camera NDI camera. If colors don't match, you need to also update my camera because white balancing is not functioning now. We can use opportunity with these LED lights which are the colors of the light pure spectrum to also calibrate my camera so it gives the true colors. Now white balance is a bit off, it's almost there but it's bit off. So fix my camera and fix my keyboard application.
+
+9. Look at the keyboard through a SCREEN capture of the small window showing his NDI camera (not a Mac camera). — **Status:** started
+10. The NDI camera's white balance is a bit off: use the keyboard's pure LED colours to calibrate it, and fix
+    the camera (MANTRA_NDI). — **Status:** open; also written into MANTRA_NDI/momentaryupdates.md
