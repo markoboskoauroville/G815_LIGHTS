@@ -31,3 +31,12 @@ painted yellow on screen; "Saving Not Supported".
 9. Look at the keyboard through a SCREEN capture of the small window showing his NDI camera (not a Mac camera). — **Status:** started
 10. The NDI camera's white balance is a bit off: use the keyboard's pure LED colours to calibrate it, and fix
     the camera (MANTRA_NDI). — **Status:** open; also written into MANTRA_NDI/momentaryupdates.md
+
+## 2.10.2026, 03:05 — memory buttons on the map, one bank each, saved in the Mac and in the keyboard
+
+> We can simplify and emulate the usage of the keyboard in the visual map of the keyboard. Please also include memory buttons so usage is very simple. I press the memory button and adjust my keyboard settings, basically the colors and brightness of each key, and it stays under that memory as well as my computer as well inside the keyboard. So let's do that. So simple switching the banks of memory visually on the screen and then adjusting the screen colors, and they stay in memory. I think that's the great idea
+
+11. M1 M2 M3 drawn on the map as the keyboard's own memory keys; pressing one switches the bank on screen AND on
+    the keyboard; pressing M1..M3 on the real keyboard switches the page too. — **Status:** started
+12. Every change is kept under the active bank on the Mac and written into that bank of the keyboard by itself
+    (no WRITE button); the keyboard's bank holds one still colour per zone (its limit), the Mac the per-key colours. — **Status:** started

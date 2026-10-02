@@ -59,6 +59,7 @@ final class G815 {
         var msg = [UInt8](repeating: 0, count: 20)
         msg[0] = 0x11; msg[1] = 0xFF; msg[2] = index; msg[3] = (function << 4) | SW_ID
         for (i, b) in params.prefix(16).enumerated() { msg[4 + i] = b }
+        while CFRunLoopRunInMode(.defaultMode, 0, true) == .handledSource {}   // late replies first
         inbox.removeAll()
         let r = IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, 0x11, msg, msg.count)
         guard r == kIOReturnSuccess else { throw HidppError(text: String(format: "write failed (0x%08x)", r)) }

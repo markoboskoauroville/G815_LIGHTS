@@ -14,6 +14,7 @@ let NAMES: [UInt16: String] = [
 
 func run() throws {
     let args = Array(CommandLine.arguments.dropFirst())
+    if args.first == "serve" { serve(); return }
     let kb = try G815()
     switch args.first ?? "features" {
     case "features":
@@ -45,6 +46,16 @@ func run() throws {
     case "brightness":
         if args.count > 1 { try kb.setBrightness(Int(args[1])!) }
         print("brightness \(try kb.brightness())")
+    case "onboard":
+        // g815 onboard <1|2|3|all> <keys rrggbb> <logo rrggbb>
+        func rgb(_ h: String) -> (UInt8, UInt8, UInt8) {
+            let c = UInt32(h, radix: 16) ?? 0
+            return (UInt8(c >> 16 & 0xFF), UInt8(c >> 8 & 0xFF), UInt8(c & 0xFF))
+        }
+        let which = args[1] == "all" ? [1, 2, 3] : [Int(args[1])!]
+        for p in which { print(try kb.setOnboardStatic(profile: p, keys: rgb(args[2]), logo: rgb(args[3]))) }
+    case "sector":
+        print(hex(try kb.readSector(Int(args[1], radix: 16)!)))
     default:
         throw HidppError(text: "usage: g815 features | call <feature> <fn> [bytes] | set i:rrggbb... | mode [1|2] | brightness [0-100]")
     }
