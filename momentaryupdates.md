@@ -76,16 +76,17 @@ painted yellow on screen; "Saving Not Supported".
     is switched at start only if the keyboard is on another one; paint at start and at 3, 10, 30, 60, 120 s; on
     USB arrival, on the keyboard reopening, on any report it sends; and every 15 s the same colours again (a loss
     lasts 15 s at most). Everything goes into ~/.g815/log.txt, so the next real restart can be read back.
-21. Presets drag and drop: rearrange them in any order, kept. — **Status:** open
+21. Presets drag and drop: rearrange them in any order, kept. — **Status:** built in v6 (SwiftUI drag), waiting for his test
 22. Preset edit simplified: no second row "name + preset"; only a "+" at the end of the presets row. Double click
     a preset (title or swatch) → a rename pop-up; an empty name leaves only the swatch; a tick "automatic name"
-    (e.g. "white warm dim 25%") as the name. — **Status:** open
+    (e.g. "white warm dim 25%") as the name. — **Status:** done in v6 (the × moved into the pop-up as DELETE); his
+    test: double click works
 
 > (3.10.2026, 05:37) please create a simple icon for this application. Make one big G and the other make 815 number in the dark mode so background is black and letters can be glowing in the white color
 
-23. The app's icon: a big G and the number 815, black ground, the letters glowing white. — **Status:** open
+23. The app's icon: a big G and the number 815, black ground, the letters glowing white. — **Status:** done in v6 (icon/make_icon.py)
 
 > (3.10.2026, morning) I tested drag and drop. It double click works, so one more thing. When I select inside the double click automatic name, then it becomes suffix to name I'm typing. Please don't gray out my name and just in that same box you add automatic name to my name
 
 24. AUTOMATIC NAME in the rename pop-up: never greys the name; ticking it adds the automatic name to his name in
-    the same box (a suffix he can still edit), unticking takes it away. — **Status:** open
+    the same box (a suffix he can still edit), unticking takes it away. — **Status:** built in v7, waiting for his test

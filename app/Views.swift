@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 5
+let VERSION = 7
 
 extension Color {
     init(hex: String) {
@@ -187,13 +187,46 @@ struct MainView: View {
     @State private var keyBd = 100.0
     @State private var brightD = 0.0
     @State private var draggingBright = false
-    @State private var presetName = ""
+    @State private var renaming: String?
+    @State private var renameText = ""
+    @State private var renameAuto = false
+    @State private var dropOn: String?
+    @State private var dragging: String?
+    @State private var dragShift = CGSize.zero
+    @State private var chipFrames: [String: CGRect] = [:]
     @State private var hexText = "FFFFFF"
     @State private var r = 255
     @State private var g = 255
     @State private var b = 255
 
     private func label(_ t: String) -> some View { Text(t).font(mono(10, .semibold)).tracking(1.6).foregroundColor(.dimSand) }
+
+    /// the rename pop-up: an empty name leaves only the swatch; AUTOMATIC NAME says the colour in words
+    private func renamer(_ p: Preset) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            label("PRESET NAME")
+            TextField("no name: only the swatch", text: $renameText).textFieldStyle(.plain).font(mono(13, .regular))
+                .foregroundColor(.sand).frame(width: 260).padding(5)
+                .background(RoundedRectangle(cornerRadius: 4).stroke(Color.dead))
+                .onSubmit { store.renamePreset(p.uid, name: renameText, auto: renameAuto); renaming = nil }
+            // ticked: the automatic name is added to his name in the same box, still his to edit; unticked: taken away
+            Toggle(isOn: Binding(get: { renameAuto }, set: { on in
+                let a = Preset.autoName(c: p.c, b: p.b)
+                var t = renameText.trimmingCharacters(in: .whitespaces)
+                if on, !t.uppercased().hasSuffix(a) { t = t.isEmpty ? a : t + " " + a }
+                if !on, t.uppercased().hasSuffix(a) { t = String(t.dropLast(a.count)).trimmingCharacters(in: .whitespaces) }
+                renameText = t; renameAuto = on
+            })) {
+                Text("AUTOMATIC NAME  " + Preset.autoName(c: p.c, b: p.b)).font(mono(11, .regular)).foregroundColor(.sand)
+            }.toggleStyle(.checkbox)
+            HStack {
+                Word(text: "DELETE", state: Color(hex: "FF3B30")) { store.deletePreset(p.uid); renaming = nil }
+                Spacer()
+                Word(text: "OK", state: .on) { store.renamePreset(p.uid, name: renameText, auto: renameAuto); renaming = nil }
+            }
+        }
+        .padding(14).background(Color.ground).preferredColorScheme(.dark)
+    }
 
     private func syncFields() { let c = hsv.rgb; r = c.0; g = c.1; b = c.2; hexText = hsv.hex.uppercased() }
 
@@ -271,21 +304,37 @@ struct MainView: View {
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     label("PRESETS")
-                    FlowRow(items: store.s.presets) { p in
-                        HStack(spacing: 6) {
-                            RoundedRectangle(cornerRadius: 3).fill(Color(hex: KeyLight(c: p.c, b: p.b).sentHex)).frame(width: 14, height: 14)
-                                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.white.opacity(0.15)))
-                            Text(p.name + (p.b < 100 ? " \(p.b)%" : "")).font(mono(12)).foregroundColor(.off)
-                            Text("×").font(mono(12)).foregroundColor(.dead).onTapGesture { store.deletePreset(p) }
+                    // Marko, 3.10.2026: drag to put them in any order; double click (name or swatch) to rename;
+                    // the "+" at the end of the row keeps the colour now chosen
+                    WrapLayout(spacing: 14) {
+                        ForEach(store.s.presets) { p in
+                            PresetChip(p: p, dropping: dropOn == p.uid)
+                                .onTapGesture(count: 2) { renaming = p.uid; renameText = p.shown; renameAuto = p.auto }
+                                .onTapGesture { hsv = HSV(hex: p.c); keyB = p.b; keyBd = Double(p.b); push() }
+                                .offset(dragging == p.uid ? dragShift : .zero)
+                                .opacity(dragging == p.uid ? 0.75 : 1)
+                                .zIndex(dragging == p.uid ? 1 : 0)
+                                .background(GeometryReader { g in
+                                    Color.clear.preference(key: ChipFrames.self, value: [p.uid: g.frame(in: .named("presets"))])
+                                })
+                                .gesture(DragGesture(minimumDistance: 5, coordinateSpace: .named("presets"))
+                                    .onChanged { g in
+                                        dragging = p.uid; dragShift = g.translation
+                                        dropOn = chipFrames.first { $0.key != p.uid && $0.value.contains(g.location) }?.key
+                                    }
+                                    .onEnded { _ in
+                                        if let t = dropOn { store.movePreset(p.uid, before: t) }
+                                        dragging = nil; dropOn = nil; dragShift = .zero
+                                    })
+                                .popover(isPresented: Binding(get: { renaming == p.uid }, set: { if !$0 { renaming = nil } })) {
+                                    renamer(p)
+                                }
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture { hsv = HSV(hex: p.c); keyB = p.b; keyBd = Double(p.b); push() }
+                        Word(text: "+", state: .sand, size: 16) { store.addPreset(c: hsv.hex, b: keyB) }
+                            .help("keep the colour now chosen as a preset")
                     }
-                    HStack(spacing: 8) {
-                        TextField("name", text: $presetName).textFieldStyle(.plain).font(mono(12, .regular)).foregroundColor(.sand)
-                            .frame(width: 120).padding(4).background(RoundedRectangle(cornerRadius: 4).stroke(Color.dead))
-                        Word(text: "+ PRESET") { store.savePreset(name: presetName, c: hsv.hex, b: keyB); presetName = "" }
-                    }
+                    .coordinateSpace(name: "presets")
+                    .onPreferenceChange(ChipFrames.self) { chipFrames = $0 }
                     label("KEYBOARD BRIGHTNESS").padding(.top, 10)
                     HStack {
                         Slider(value: $brightD, in: 0...100, onEditingChanged: { e in
@@ -306,12 +355,26 @@ struct MainView: View {
     }
 }
 
-/// chips that wrap onto the next line
-struct FlowRow<Item: Identifiable, Content: View>: View {
-    let items: [Item]
-    let content: (Item) -> Content
+struct ChipFrames: PreferenceKey {
+    static let defaultValue: [String: CGRect] = [:]
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) { value.merge(nextValue()) { $1 } }
+}
+
+/// one preset: its swatch, and its name when it has one; amber edge while another is dragged onto it
+struct PresetChip: View {
+    let p: Preset
+    var dropping = false
     var body: some View {
-        WrapLayout(spacing: 14) { ForEach(items) { content($0) } }
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 3).fill(Color(hex: KeyLight(c: p.c, b: p.b).sentHex)).frame(width: 14, height: 14)
+                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.white.opacity(0.15)))
+            if !p.shown.isEmpty {
+                Text(p.shown + (!p.auto && p.b < 100 ? " \(p.b)%" : "")).font(mono(12)).foregroundColor(.off)
+            }
+        }
+        .padding(.horizontal, 4).padding(.vertical, 3)
+        .overlay(RoundedRectangle(cornerRadius: 4).stroke(dropping ? Color.amber : .clear, lineWidth: 1.5))
+        .contentShape(Rectangle())
     }
 }
 

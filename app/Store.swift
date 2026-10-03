@@ -28,11 +28,51 @@ struct Bank: Codable {
     var keys: [String: KeyLight] = [:]
 }
 
+/// A saved colour + brightness. Its name may be empty (only the swatch shows) or automatic, made from the colour
+/// (Marko, 3.10.2026: "I can even remove the name completely ... a check mark automatic name").
 struct Preset: Codable, Identifiable, Equatable {
+    var uid = UUID().uuidString
     var name: String
     var c: String
     var b: Int
-    var id: String { name + c + String(b) }
+    var auto = false
+    var id: String { uid }
+
+    init(name: String, c: String, b: Int, auto: Bool = false) { self.name = name; self.c = c; self.b = b; self.auto = auto }
+    init(from d: Decoder) throws {          // presets saved by v4 had no uid and no auto
+        let k = try d.container(keyedBy: CodingKeys.self)
+        uid = try k.decodeIfPresent(String.self, forKey: .uid) ?? UUID().uuidString
+        name = try k.decodeIfPresent(String.self, forKey: .name) ?? ""
+        c = try k.decode(String.self, forKey: .c)
+        b = try k.decode(Int.self, forKey: .b)
+        auto = try k.decodeIfPresent(Bool.self, forKey: .auto) ?? false
+    }
+
+    /// v6 kept the automatic name apart (name empty, auto on); since 3.10.2026 it is written into the name itself
+    var shown: String { auto && name.isEmpty ? Preset.autoName(c: c, b: b) : name }
+
+    /// "WHITE", "WARM WHITE 25%", "ORANGE", "OFF": the colour in words, the brightness when it is not 100
+    static func autoName(c: String, b: Int) -> String {
+        let v = UInt32(c, radix: 16) ?? 0
+        let r = Double(v >> 16 & 0xFF) / 255, g = Double(v >> 8 & 0xFF) / 255, bl = Double(v & 0xFF) / 255
+        let mx = max(r, g, bl), mn = min(r, g, bl), d = mx - mn
+        if b == 0 || mx * Double(b) / 100 < 0.03 { return "OFF" }
+        var h = 0.0
+        if d > 0 { h = mx == r ? ((g - bl) / d).truncatingRemainder(dividingBy: 6) : mx == g ? (bl - r) / d + 2 : (r - g) / d + 4 }
+        h = (h * 60 + 360).truncatingRemainder(dividingBy: 360)
+        let sat = mx > 0 ? d / mx : 0
+        var word: String
+        if sat < 0.12 { word = mx < 0.6 ? "GREY" : "WHITE" }
+        else if sat < 0.55 && h >= 15 && h < 60 { word = "WARM WHITE" }
+        else if sat < 0.45 && h >= 180 && h < 260 { word = "COOL WHITE" }
+        else {
+            let names: [(Double, String)] = [(15, "RED"), (40, "ORANGE"), (65, "YELLOW"), (90, "LIME"), (150, "GREEN"),
+                (175, "TEAL"), (200, "CYAN"), (225, "AZURE"), (255, "BLUE"), (285, "VIOLET"), (320, "MAGENTA"), (345, "PINK"), (361, "RED")]
+            word = names.first { h < $0.0 }!.1
+        }
+        if mx < 0.45 && word != "GREY" { word = "DARK " + word }
+        return b < 100 ? "\(word) \(b)%" : word
+    }
 }
 
 struct Settings: Codable {
@@ -281,10 +321,21 @@ final class Store: ObservableObject {
     }
 
     // ------------------------------------------------------------ presets
-    func savePreset(name: String, c: String, b: Int) {
-        let n = name.isEmpty ? "#" + c.uppercased() : String(name.uppercased().prefix(16))
-        s.presets.append(Preset(name: n, c: c, b: b))
+    /// "+" at the end of the row: the colour now chosen, named by itself
+    func addPreset(c: String, b: Int) { s.presets.append(Preset(name: "", c: c, b: b, auto: true)); save() }
+    func renamePreset(_ uid: String, name: String, auto: Bool) {
+        guard let i = s.presets.firstIndex(where: { $0.uid == uid }) else { return }
+        s.presets[i].name = String(name.trimmingCharacters(in: .whitespaces).uppercased().prefix(24))
+        s.presets[i].auto = auto
         save()
     }
-    func deletePreset(_ p: Preset) { s.presets.removeAll { $0 == p }; save() }
+    func deletePreset(_ uid: String) { s.presets.removeAll { $0.uid == uid }; save() }
+    /// dragged onto another preset: it takes that one's place
+    func movePreset(_ uid: String, before target: String) {
+        guard uid != target, let from = s.presets.firstIndex(where: { $0.uid == uid }) else { return }
+        let p = s.presets.remove(at: from)
+        let to = s.presets.firstIndex(where: { $0.uid == target }).map { $0 + (from <= $0 ? 1 : 0) } ?? s.presets.count
+        s.presets.insert(p, at: min(to, s.presets.count))
+        save()
+    }
 }

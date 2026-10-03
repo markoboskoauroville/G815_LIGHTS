@@ -11,7 +11,7 @@ APP="build/G815 Lights.app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/G815Lights" $WIRE app/*.swift 2>&1 | grep -v "warning:" || true
 [ -x "$APP/Contents/MacOS/G815Lights" ] || { echo "the app did not build"; exit 1; }
-cp layout.json "$APP/Contents/Resources/"
+cp layout.json icon/AppIcon.icns "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<PL
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -20,6 +20,7 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>CFBundleDisplayName</key><string>G815 Lights</string>
 <key>CFBundleIdentifier</key><string>community.auroville.g815lights</string>
 <key>CFBundleExecutable</key><string>G815Lights</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>$V</string>
 <key>CFBundleVersion</key><string>$V</string>
