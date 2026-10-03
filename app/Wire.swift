@@ -13,6 +13,10 @@ final class Wire: Thread {
     private let lock = NSCondition()
     private var kb: G815?
     var onError: ((String) -> Void)?
+    /// the keyboard opened (first time, or back after a failure: a replug, a reset at boot)
+    var onOpen: (() -> Void)?
+    /// the keyboard spoke on its own; called on this thread
+    var onUnasked: (([UInt8]) -> Void)?
 
     override init() {
         super.init()
@@ -34,7 +38,7 @@ final class Wire: Thread {
             let job = jobs.removeFirst()
             lock.unlock()
             do {
-                if kb == nil { kb = try G815() }
+                if kb == nil { kb = try G815(); kb!.onUnasked = onUnasked; onOpen?() }
                 try job(kb!)
             } catch {
                 kb = nil

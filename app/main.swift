@@ -13,6 +13,7 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var store: Store!
     var window: NSWindow?
     var poll: Timer?
+    var usb: IOHIDManager?
 
     func applicationDidFinishLaunching(_ n: Notification) {
         // ONE COPY ONLY: two would fight over the keyboard (MEASURED 2.10.2026: the login agent's copy and one
@@ -37,18 +38,29 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         MainActor.assumeIsolated {
             store = Store()
-            store.paintAll()
-            store.choose(store.s.active)
+            store.start()
             // every bank in the keyboard brought in line with the Mac's; a bank already so is not written
             for i in 1...3 { store.writeBank(i) }
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.store.poll() }
             }
         }
+        // the keyboard arriving on USB (a replug, or macOS resetting it during boot and login): paint again
+        let m = IOHIDManagerCreate(kCFAllocatorDefault, 0)
+        IOHIDManagerSetDeviceMatching(m, [kIOHIDVendorIDKey: VID, kIOHIDProductIDKey: PID] as CFDictionary)
+        IOHIDManagerRegisterDeviceMatchingCallback(m, { ctx, _, _, _ in
+            let me = Unmanaged<Delegate>.fromOpaque(ctx!).takeUnretainedValue()
+            Store.log("USB: the keyboard arrived")
+            MainActor.assumeIsolated { me.store.repaintSoon("USB arrival") }
+        }, Unmanaged.passUnretained(self).toOpaque())
+        IOHIDManagerRegisterDeviceRemovalCallback(m, { _, _, _, _ in Store.log("USB: the keyboard left") }, nil)
+        IOHIDManagerScheduleWithRunLoop(m, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
+        IOHIDManagerOpen(m, 0)
+        usb = m
         let ws = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
             ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { MainActor.assumeIsolated { self?.store.paintAll() } }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { MainActor.assumeIsolated { self?.store.paintAll(name.rawValue) } }
             }
         }
         if CommandLine.arguments.contains("--background") {

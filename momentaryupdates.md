@@ -70,8 +70,17 @@ painted yellow on screen; "Saving Not Supported".
 
 20. After a restart the keyboard boots all orange, and at login the app does not put the bank's per-key colours
     (M1: F1 red) back. Find why and fix: at login the active bank's per-key colours must be painted. (The boot
-    colour itself is the keyboard's onboard memory: one still colour per zone.) — **Status:** open
+    colour itself is the keyboard's onboard memory: one still colour per zone.) — **Status:** done in v5. Found
+    with the Pixel's camera: a replayed login painted fine in 4 s, but a bank reload UNDER the running app
+    (M2 → M1) is silent: no report, the bank number unchanged, every key back to the bank's orange. Now: the bank
+    is switched at start only if the keyboard is on another one; paint at start and at 3, 10, 30, 60, 120 s; on
+    USB arrival, on the keyboard reopening, on any report it sends; and every 15 s the same colours again (a loss
+    lasts 15 s at most). Everything goes into ~/.g815/log.txt, so the next real restart can be read back.
 21. Presets drag and drop: rearrange them in any order, kept. — **Status:** open
 22. Preset edit simplified: no second row "name + preset"; only a "+" at the end of the presets row. Double click
     a preset (title or swatch) → a rename pop-up; an empty name leaves only the swatch; a tick "automatic name"
     (e.g. "white warm dim 25%") as the name. — **Status:** open
+
+> (3.10.2026, 05:37) please create a simple icon for this application. Make one big G and the other make 815 number in the dark mode so background is black and letters can be glowing in the white color
+
+23. The app's icon: a big G and the number 815, black ground, the letters glowing white. — **Status:** open

@@ -26,6 +26,8 @@ final class G815 {
     private var inbox: [[UInt8]] = []
     private let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 64)
     private var featureIndex: [UInt16: UInt8] = [:]
+    /// a report nobody asked for (the keyboard's own news: a profile reloaded, a key pressed on it)
+    var onUnasked: (([UInt8]) -> Void)?
 
     init() throws {
         manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
@@ -60,6 +62,7 @@ final class G815 {
         msg[0] = 0x11; msg[1] = 0xFF; msg[2] = index; msg[3] = (function << 4) | SW_ID
         for (i, b) in params.prefix(16).enumerated() { msg[4 + i] = b }
         while CFRunLoopRunInMode(.defaultMode, 0, true) == .handledSource {}   // late replies first
+        for m in inbox where unasked(m) { onUnasked?(m) }
         inbox.removeAll()
         let r = IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, 0x11, msg, msg.count)
         guard r == kIOReturnSuccess else { throw HidppError(text: String(format: "write failed (0x%08x)", r)) }
@@ -69,6 +72,7 @@ final class G815 {
             while !inbox.isEmpty {
                 let m = inbox.removeFirst()
                 guard m.count >= 4, m[0] == 0x11 || m[0] == 0x10 else { continue }
+                if unasked(m) { onUnasked?(m); continue }
                 if m[2] == 0xFF && m.count >= 6 && m[3] == index && m[4] == msg[3] {
                     throw HidppError(text: String(format: "HID++ error %d on feature index 0x%02x function %d", m[5], index, function))
                 }
@@ -76,6 +80,13 @@ final class G815 {
             }
         }
         throw HidppError(text: String(format: "no answer from feature index 0x%02x function %d", index, function))
+    }
+
+    /// Our replies carry SW_ID in the low nibble of the function byte (byte 4 of an error); anything else is
+    /// the keyboard speaking on its own.
+    private func unasked(_ m: [UInt8]) -> Bool {
+        guard m.count >= 5, m[0] == 0x11 || m[0] == 0x10 else { return false }
+        return (m[2] == 0xFF ? m[4] : m[3]) & 0x0F != SW_ID
     }
 
     /// The feature's index on this firmware, or nil when the keyboard does not have it.
