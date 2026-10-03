@@ -84,3 +84,8 @@ painted yellow on screen; "Saving Not Supported".
 > (3.10.2026, 05:37) please create a simple icon for this application. Make one big G and the other make 815 number in the dark mode so background is black and letters can be glowing in the white color
 
 23. The app's icon: a big G and the number 815, black ground, the letters glowing white. — **Status:** open
+
+> (3.10.2026, morning) I tested drag and drop. It double click works, so one more thing. When I select inside the double click automatic name, then it becomes suffix to name I'm typing. Please don't gray out my name and just in that same box you add automatic name to my name
+
+24. AUTOMATIC NAME in the rename pop-up: never greys the name; ticking it adds the automatic name to his name in
+    the same box (a suffix he can still edit), unticking takes it away. — **Status:** open
