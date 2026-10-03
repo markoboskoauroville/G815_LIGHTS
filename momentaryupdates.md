@@ -76,7 +76,7 @@ painted yellow on screen; "Saving Not Supported".
     is switched at start only if the keyboard is on another one; paint at start and at 3, 10, 30, 60, 120 s; on
     USB arrival, on the keyboard reopening, on any report it sends; and every 15 s the same colours again (a loss
     lasts 15 s at most). Everything goes into ~/.g815/log.txt, so the next real restart can be read back.
-21. Presets drag and drop: rearrange them in any order, kept. — **Status:** built in v6 (SwiftUI drag), waiting for his test
+21. Presets drag and drop: rearrange them in any order, kept. — **Status:** done in v6; his test 3.10.2026: works
 22. Preset edit simplified: no second row "name + preset"; only a "+" at the end of the presets row. Double click
     a preset (title or swatch) → a rename pop-up; an empty name leaves only the swatch; a tick "automatic name"
     (e.g. "white warm dim 25%") as the name. — **Status:** done in v6 (the × moved into the pop-up as DELETE); his
@@ -89,4 +89,8 @@ painted yellow on screen; "Saving Not Supported".
 > (3.10.2026, morning) I tested drag and drop. It double click works, so one more thing. When I select inside the double click automatic name, then it becomes suffix to name I'm typing. Please don't gray out my name and just in that same box you add automatic name to my name
 
 24. AUTOMATIC NAME in the rename pop-up: never greys the name; ticking it adds the automatic name to his name in
-    the same box (a suffix he can still edit), unticking takes it away. — **Status:** built in v7, waiting for his test
+    the same box (a suffix he can still edit), unticking takes it away. — **Status:** done in v7; his test 3.10.2026: works
+
+> (3.10.2026, morning) everything works except I don't want when I press plus that you give an automatic name. The automatic name is only manual addition
+
+25. "+" makes a preset with no name (only the swatch); the automatic name only when he ticks it. — **Status:** done in v8

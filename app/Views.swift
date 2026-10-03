@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 7
+let VERSION = 8
 
 extension Color {
     init(hex: String) {

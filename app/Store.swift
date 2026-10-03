@@ -321,8 +321,9 @@ final class Store: ObservableObject {
     }
 
     // ------------------------------------------------------------ presets
-    /// "+" at the end of the row: the colour now chosen, named by itself
-    func addPreset(c: String, b: Int) { s.presets.append(Preset(name: "", c: c, b: b, auto: true)); save() }
+    /// "+" at the end of the row: the colour now chosen, with no name — only the swatch; the automatic name is his
+    /// to add in the rename pop-up (Marko, 3.10.2026: "The automatic name is only manual addition")
+    func addPreset(c: String, b: Int) { s.presets.append(Preset(name: "", c: c, b: b)); save() }
     func renamePreset(_ uid: String, name: String, auto: Bool) {
         guard let i = s.presets.firstIndex(where: { $0.uid == uid }) else { return }
         s.presets[i].name = String(name.trimmingCharacters(in: .whitespaces).uppercased().prefix(24))
