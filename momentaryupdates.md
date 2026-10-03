@@ -63,3 +63,15 @@ painted yellow on screen; "Saving Not Supported".
 > (2.10.2026, 03:30) Please remove this glowing effect from my keyboard application. Colors are good, but you don't need to really to use glow. Should be clear.
 
 19. No glow on the legends: clear lit letters in the key's colour. — **Status:** done in v2
+
+## 3.10.2026, morning — the bank after a restart, presets that move, a simpler preset edit
+
+> Work on G815 app first of all. After restart, the special keys with different colors are not remembered. So for example in memory 1, F1 is red, but after I restart the computer and when it's booting up, all keys are orange. Then when I log in the app takes over and then it turns my keyboard to F1, which is red, which supposed to be memory F1 red. But it's not happening for some reason. Updates to interface presets. They need to be drag and dropable so I can rearrange them any way I like. 2. Simplifying edit preset: second row name plus preset. We don't need that. We just need the plus at the end of the row, and then to rename the preset itself. I double click on it any anywhere in the title or color, and then pop up comes for renaming. I can even remove the name completely, and then there is only swatch without the name. And there will be a check marks automatic name when you can add automatic name like white warm dim 25% off your preset name. So there is option plus preset I mean plus preset name. That's the thing, and let's fix that.
+
+20. After a restart the keyboard boots all orange, and at login the app does not put the bank's per-key colours
+    (M1: F1 red) back. Find why and fix: at login the active bank's per-key colours must be painted. (The boot
+    colour itself is the keyboard's onboard memory: one still colour per zone.) — **Status:** open
+21. Presets drag and drop: rearrange them in any order, kept. — **Status:** open
+22. Preset edit simplified: no second row "name + preset"; only a "+" at the end of the presets row. Double click
+    a preset (title or swatch) → a rename pop-up; an empty name leaves only the swatch; a tick "automatic name"
+    (e.g. "white warm dim 25%") as the name. — **Status:** open
