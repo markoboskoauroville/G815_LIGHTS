@@ -72,3 +72,9 @@ which the content sat a third of the way down after a resize.
 
 M1 M2 M3 on the keyboard are banks, each with its own layout. An accidental M press puts the keyboard on that
 bank's memory (one colour) and the app follows it. v9 offers BACK TO Mx, a LOCK, and paints again at 1.5, 3, 6 s.
+
+## 12. A synthetic click on an inactive window is swallowed (6.10.2026)
+
+Testing the lasso with Hammerspoon: clicks on LASSO and NONE did nothing while the drag still worked, because
+the window was not key and SwiftUI's plain buttons take the first click only to activate. Focus the window
+(`w:focus()`, wait half a second) before posting clicks.

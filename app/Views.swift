@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 9
+let VERSION = 10
 
 extension Color {
     init(hex: String) {
@@ -47,9 +47,13 @@ struct HSV: Equatable {
 struct Board: View {
     @ObservedObject var store: Store
     @Binding var sel: Set<String>
+    /// LASSO (Marko, 6.10.2026: "add a selection method with the lasso"): a drag draws a free loop; every key whose
+    /// centre is inside is chosen. Shift adds to the choice, Option takes away, plain replaces it.
+    var lasso = false
     var onChosen: () -> Void
     @State private var adding = true
     @State private var lastId: String?
+    @State private var loop: [CGPoint] = []
 
     var body: some View {
         GeometryReader { geo in
@@ -64,10 +68,20 @@ struct Board: View {
                 ForEach(store.layout.banks, id: \.l) { b in
                     bankCap(b, u).offset(x: pad + b.x * u + 2, y: pad + b.y * u + 2)
                 }
+                if loop.count > 1 {
+                    Path { p in p.addLines(loop); p.closeSubpath() }
+                        .fill(Color.amber.opacity(0.12))
+                    Path { p in p.addLines(loop); p.closeSubpath() }
+                        .stroke(Color.amber, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round, dash: [6, 4]))
+                }
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onChanged { g in
+                    if lasso {
+                        if loop.isEmpty || hypot(g.location.x - loop.last!.x, g.location.y - loop.last!.y) > 3 { loop.append(g.location) }
+                        return
+                    }
                     let p = CGPoint(x: (g.location.x - pad) / u, y: (g.location.y - pad) / u)
                     if g.translation == .zero, let b = store.layout.banks.first(where: { p.x >= $0.x && p.x < $0.x + 1 && p.y >= $0.y && p.y < $0.y + 1 }) {
                         if b.i > 0 { store.choose(b.i) }
@@ -80,7 +94,22 @@ struct Board: View {
                         lastId = k.id
                     }
                 }
-                .onEnded { _ in lastId = nil; onChosen() })
+                .onEnded { _ in
+                    if lasso {
+                        defer { loop = [] }
+                        guard loop.count > 2 else { return }
+                        var shape = Path(); shape.addLines(loop); shape.closeSubpath()
+                        let inside = Set(store.layout.keys.filter { k in
+                            shape.contains(CGPoint(x: pad + (k.x + k.w / 2) * u, y: pad + (k.y + k.h / 2) * u))
+                        }.map(\.id))
+                        let mods = NSEvent.modifierFlags
+                        if mods.contains(.option) { sel.subtract(inside) }
+                        else if mods.contains(.shift) { sel.formUnion(inside) }
+                        else { sel = inside }
+                        onChosen(); return
+                    }
+                    lastId = nil; onChosen()
+                })
         }
     }
 
@@ -198,6 +227,7 @@ struct MainView: View {
     @State private var r = 255
     @State private var g = 255
     @State private var b = 255
+    @State private var lasso = false
 
     private func label(_ t: String) -> some View { Text(t).font(mono(10, .semibold)).tracking(1.6).foregroundColor(.dimSand) }
 
@@ -266,18 +296,20 @@ struct MainView: View {
                     Text("LOCK M\(store.s.active): M keys on the keyboard do nothing").font(mono(11, .regular)).foregroundColor(.sand)
                 }.toggleStyle(.checkbox)
             }
-            Board(store: store, sel: $sel, onChosen: pickFromSelection)
+            Board(store: store, sel: $sel, lasso: lasso, onChosen: pickFromSelection)
                 .aspectRatio(store.layout.w / store.layout.h, contentMode: .fit)
             HStack(spacing: 4) {
                 label("KEYS").padding(.trailing, 6)
                 Word(text: "ALL") { sel = Set(store.layout.keys.map(\.id)); pickFromSelection() }
                 Word(text: "NONE") { sel = [] }
+                Word(text: "LASSO", state: lasso ? .on : .off) { lasso.toggle() }
                 Word(text: "SAME COLOUR") {
                     guard let f = sel.first else { return }
                     let k = store.key(f)
                     for c in store.layout.keys where store.key(c.id) == k { sel.insert(c.id) }
                 }
-                Text(sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen").font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
+                Text(lasso ? (sel.isEmpty ? "draw a loop around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
+                           : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
             }
             HStack(alignment: .top, spacing: 30) {
                 VStack(alignment: .leading, spacing: 10) {
