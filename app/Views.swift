@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 8
+let VERSION = 9
 
 extension Color {
     init(hex: String) {
@@ -249,13 +249,22 @@ struct MainView: View {
                 Text(store.connected ? "G815 \(store.serial)" : (store.error.isEmpty ? "looking for the keyboard" : store.error))
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
                 Spacer()
+                Word(text: store.checking ? "CHECKING…" : "RECHECK KEYBOARD", state: .amber) { store.recheck() }
                 Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand)
             }
+
             HStack(spacing: 4) {
                 label("BANK").padding(.trailing, 6)
                 ForEach(1...3, id: \.self) { i in Word(text: "M\(i)", state: store.s.active == i ? .on : .off, size: 15) { store.choose(i) } }
                 Text("in the keyboard: " + (store.bankNote[store.s.active] ?? "as it was"))
                     .font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 10)
+                if let b = store.cameFrom {
+                    Word(text: "BACK TO M\(b)", state: .amber) { store.backToCameFrom() }.padding(.leading, 10)
+                }
+                Spacer()
+                Toggle(isOn: Binding(get: { store.s.locked }, set: { store.setLocked($0) })) {
+                    Text("LOCK M\(store.s.active): M keys on the keyboard do nothing").font(mono(11, .regular)).foregroundColor(.sand)
+                }.toggleStyle(.checkbox)
             }
             Board(store: store, sel: $sel, onChosen: pickFromSelection)
                 .aspectRatio(store.layout.w / store.layout.h, contentMode: .fit)
@@ -346,6 +355,32 @@ struct MainView: View {
                 }
             }
         }
+        // the RECHECK report floats over the board, so the window's layout never grows (inline, it blanked the window)
+        .overlay(alignment: .topTrailing) {
+            if !store.report.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("RECHECK").font(mono(11, .semibold)).tracking(1.6).foregroundColor(.dimSand)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Group {
+                            ForEach(store.report) { l in
+                                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                    Circle().fill(l.ok == nil ? Color.off : (l.ok! ? Color.on : Color(hex: "FF3B30"))).frame(width: 7, height: 7)
+                                    Text(l.text).font(mono(12, .regular)).foregroundColor(.sand).fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                        }
+                    }
+                    HStack { Spacer(); Word(text: "CLOSE", state: .sand) { store.report = [] } }
+                }
+                .padding(14).frame(width: 620)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.ground))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.amber.opacity(0.6)))
+                .shadow(color: .black.opacity(0.6), radius: 20)
+                .padding(.top, 34)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(20)
         .background(Color.ground)
         .preferredColorScheme(.dark)

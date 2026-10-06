@@ -60,3 +60,15 @@ correct, CRC valid. Two openers interleave their HID++ traffic.
 
 macOS's "Quit & Reopen" after granting a permission started a second copy beside the login agent's. Now a
 second copy asks the first to show its window (a distributed notification) and exits.
+
+## 10. A panel that grows inside the window blanks it (6.10.2026)
+
+The first RECHECK report was a VStack inside the main VStack. Its eleven lines made the content taller than the
+window and the whole window drew empty (the app kept running). The report now floats in an `.overlay`, and the
+root view is pinned with `.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)`, without
+which the content sat a third of the way down after a resize.
+
+## 11. "It resets my layout" is often a bank switch
+
+M1 M2 M3 on the keyboard are banks, each with its own layout. An accidental M press puts the keyboard on that
+bank's memory (one colour) and the app follows it. v9 offers BACK TO Mx, a LOCK, and paints again at 1.5, 3, 6 s.

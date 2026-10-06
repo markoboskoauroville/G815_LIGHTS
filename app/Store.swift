@@ -7,7 +7,9 @@
 // after the last change, so the power-on is still and never a light show. Choosing a bank here switches
 // the keyboard; pressing M1..M3 on the keyboard switches this.
 
+import AppKit
 import Foundation
+import IOKit.hid
 import SwiftUI
 
 struct KeyLight: Codable, Equatable {
@@ -78,11 +80,25 @@ struct Preset: Codable, Identifiable, Equatable {
 struct Settings: Codable {
     var memories: [Bank] = (1...3).map { Bank(name: "M\($0)") }
     var active = 1
+    /// LOCK (6.10.2026): an M key pressed on the keyboard is undone, the keyboard put back on this bank
+    var locked = false
     var presets: [Preset] = [
         Preset(name: "WHITE", c: "ffffff", b: 100), Preset(name: "WARM", c: "ff8a2a", b: 100),
         Preset(name: "DIM", c: "ffffff", b: 25), Preset(name: "OFF", c: "000000", b: 0),
     ]
+
+    init() {}
+    init(from d: Decoder) throws {          // settings saved before v9 have no "locked"
+        let k = try d.container(keyedBy: CodingKeys.self)
+        memories = try k.decodeIfPresent([Bank].self, forKey: .memories) ?? memories
+        active = try k.decodeIfPresent(Int.self, forKey: .active) ?? 1
+        locked = try k.decodeIfPresent(Bool.self, forKey: .locked) ?? false
+        presets = try k.decodeIfPresent([Preset].self, forKey: .presets) ?? presets
+    }
 }
+
+/// one line of the RECHECK report: ok true (green), false (red, something to do), nil (just information)
+struct CheckLine: Identifiable { let id = UUID(); let ok: Bool?; let text: String }
 
 struct KeyCap: Codable, Identifiable {
     let l: String, id: String
@@ -119,6 +135,10 @@ final class Store: ObservableObject {
     @Published var brightness = 0          // the keyboard's own, the button's
     @Published var error = ""
     @Published var bankNote: [Int: String] = [:]
+    @Published var report: [CheckLine] = []
+    @Published var checking = false
+    /// the bank he was on before an M key on the keyboard moved him (for BACK TO)
+    @Published var cameFrom: Int?
 
     let layout: KeyLayout
     let wire = Wire()
@@ -310,13 +330,117 @@ final class Store: ObservableObject {
                 self.connected = true; self.error = ""; self.serial = serial; self.brightness = bright
                 if asked < self.chosenAt { return }
                 if (1...3).contains(profile) && profile != self.s.active && self.bankTimer == nil {
+                    if self.s.locked {
+                        // LOCKED: the keyboard is put back on his bank and painted, the press undone
+                        Store.log("M\(profile) pressed on the keyboard, locked to M\(self.s.active): undone")
+                        self.choose(self.s.active)
+                        self.paintAfterSwitch("lock undid M\(profile)")
+                        return
+                    }
+                    self.cameFrom = self.s.active
                     self.s.active = profile
                     self.save()
                     self.paintAll("M\(profile) pressed on the keyboard")
+                    self.paintAfterSwitch("after M\(profile)")
                 } else if !was {
                     self.paintAll("keyboard back")
                 }
             }
+        }
+    }
+
+    /// The keyboard reloads its bank from memory a moment after an M key, sometimes later than the first paint
+    /// (his word, 6.10.2026: "it comes back sometimes, but not always"); so paint again at 1.5, 3 and 6 s.
+    func paintAfterSwitch(_ why: String) {
+        for t in [1.5, 3.0, 6.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + t) { [weak self] in self?.paintAll("\(why) + \(t) s") }
+        }
+    }
+
+    func backToCameFrom() {
+        guard let b = cameFrom else { return }
+        cameFrom = nil
+        choose(b)
+        paintAfterSwitch("back to M\(b)")
+    }
+
+    func setLocked(_ on: Bool) { s.locked = on; save(); Store.log(on ? "locked to M\(s.active)" : "unlocked") }
+
+    // ------------------------------------------------------------ RECHECK
+    /// RECHECK KEYBOARD (Marko, 6.10.2026: "add some button to force detection of the keyboard and update the presets
+    /// ... it is going to scan and inform me what's wrong, why there is no right preset there"). Every step says what
+    /// it found in plain words; the keyboard is opened again from nothing, the banks in its memory brought in line,
+    /// every key painted.
+    func recheck() {
+        guard !checking else { return }
+        checking = true
+        report = []
+        Store.log("RECHECK")
+        func say(_ ok: Bool?, _ t: String) { report.append(CheckLine(ok: ok, text: t)); Store.log("check: " + t) }
+        // 1. the permission the light interface needs
+        let access = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+        say(access, access ? "Input Monitoring: allowed" : "Input Monitoring is OFF for G815 Lights. System Settings › Privacy & Security › Input Monitoring: switch G815 Lights on, then RECHECK.")
+        // 2. on USB at all
+        let m = IOHIDManagerCreate(kCFAllocatorDefault, 0)
+        IOHIDManagerSetDeviceMatching(m, [kIOHIDVendorIDKey: VID, kIOHIDProductIDKey: PID] as CFDictionary)
+        let n = (IOHIDManagerCopyDevices(m) as? Set<IOHIDDevice>)?.count ?? 0
+        say(n > 0, n > 0 ? "USB: the G815 is plugged in" : "USB: no G815 on USB. Check the cable and the port, then RECHECK.")
+        // 3. anything else that talks to the keyboard
+        let me = ProcessInfo.processInfo.processIdentifier
+        let rivals = NSWorkspace.shared.runningApplications.filter { a in
+            guard a.processIdentifier != me else { return false }
+            let id = (a.bundleIdentifier ?? "").lowercased(), name = (a.localizedName ?? "").lowercased()
+            return id == "community.auroville.g815lights" || name.contains("g hub") || name.contains("lghub") || name.contains("openrgb") || name.contains("logi options")
+        }.compactMap(\.localizedName)
+        say(rivals.isEmpty, rivals.isEmpty ? "No other program is driving the keyboard" : "Also talking to the keyboard: " + rivals.joined(separator: ", ") + ". Quit it, then RECHECK; two programs fight over the lights.")
+        // 4. on the wire: open from nothing, read, bring the banks in line, paint
+        let want = s.active
+        let banks = (1...3).map { i -> (Int, (UInt8, UInt8, UInt8), (UInt8, UInt8, UInt8), Int) in
+            let b = s.memories[i - 1]; return (i, dominant(b), (b.keys["d2"] ?? b.base).sent, b.keys.count)
+        }
+        let locked = s.locked
+        wire.reopen()
+        wire.run { [weak self] kb in
+            var lines: [CheckLine] = []
+            func add(_ ok: Bool?, _ t: String) { lines.append(CheckLine(ok: ok, text: t)); Store.log("check: " + t) }
+            add(true, "Opened the keyboard again from nothing: G815 \(kb.serial)")
+            let ob = try kb.need(0x8100)
+            let now = Int(try kb.call(ob, 4)[1])
+            let mode = try kb.onboardMode()
+            add(nil, "The keyboard's onboard mode: \(mode)")
+            for (i, keys, logo, set) in banks {
+                let d = try kb.readSector(i)
+                let stored = UInt16(d[SECTOR - 2]) << 8 | UInt16(d[SECTOR - 1])
+                if crc16(d[0..<SECTOR - 2]) != stored { add(false, "M\(i) in the keyboard's memory is damaged (CRC wrong); not touched. Tell Claude."); continue }
+                let said = try kb.setOnboardStatic(profile: i, keys: keys, logo: logo)
+                let what = set == 0 ? "no keys of its own (all one colour)" : "\(set) keys of its own"
+                add(true, said.contains("already") ? "M\(i): memory already right; on the Mac \(what)" : "M\(i): memory was different, written again; on the Mac \(what)")
+            }
+            if now != want {
+                if locked {
+                    try kb.call(ob, 3, [0, UInt8(want)]); Thread.sleep(forTimeInterval: 0.4)
+                    add(true, "The keyboard was on M\(now), the app on M\(want) (locked): the keyboard is back on M\(want)")
+                } else {
+                    add(false, "The keyboard is on M\(now) but the app showed M\(want): an M key was pressed. The app follows the keyboard; press BACK TO M\(want) for your layout.")
+                }
+            } else {
+                add(true, "The keyboard and the app are on the same bank, M\(now)")
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if now != want && !locked { self.cameFrom = want; self.s.active = now; self.save() }
+                self.report.append(contentsOf: lines)
+                self.paintAll("recheck")
+                self.paintAfterSwitch("recheck")
+                self.report.append(CheckLine(ok: true, text: "Every key painted with M\(self.s.active)'s colours, and again at 1.5, 3 and 6 s"))
+                self.connected = true; self.error = ""; self.checking = false
+            }
+        }
+        // the wire reports a failure through onError; the report says it too
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, self.checking else { return }
+            self.report.append(CheckLine(ok: false, text: "The keyboard did not answer: " + (self.error.isEmpty ? "no reply in 8 s" : self.error) + ". Unplug it, plug it in, RECHECK."))
+            self.checking = false
         }
     }
 

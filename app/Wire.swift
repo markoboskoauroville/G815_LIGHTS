@@ -31,11 +31,16 @@ final class Wire: Thread {
 
     var queued: Int { lock.lock(); defer { lock.unlock() }; return jobs.count }
 
+    /// RECHECK (Marko, 6.10.2026): the next job closes the keyboard and opens it again from nothing, as at a replug
+    private var fresh = false
+    func reopen() { lock.lock(); fresh = true; lock.unlock() }
+
     override func main() {
         while true {
             lock.lock()
             while jobs.isEmpty { lock.wait() }
             let job = jobs.removeFirst()
+            if fresh { fresh = false; kb = nil }
             lock.unlock()
             do {
                 if kb == nil { kb = try G815(); kb!.onUnasked = onUnasked; onOpen?() }
