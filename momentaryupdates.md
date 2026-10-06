@@ -106,3 +106,7 @@ painted yellow on screen; "Saving Not Supported".
 > please in my G815 keyboard add a selection method with the lasso so I can lasso selection. Please. Thank you
 
 2. Lasso selection: draw a free shape around keys to choose them. **Status:** done, v10: LASSO in the KEYS row (green when on); a drag draws a dashed amber loop, keys whose centre is inside are chosen; shift adds, option takes away; off, the drag paints across keys as before. Tested on his Mac through Hammerspoon: a loop around E R D F chose exactly those four.
+
+## 6.10.2026
+
+> for lasso selection, I mean by lasso is a square selection, so just turn in G815 Lights application instead of free lasso. It needs to draw squares only
