@@ -94,3 +94,9 @@ painted yellow on screen; "Saving Not Supported".
 > (3.10.2026, morning) everything works except I don't want when I press plus that you give an automatic name. The automatic name is only manual addition
 
 25. "+" makes a preset with no name (only the swatch); the automatic name only when he ticks it. — **Status:** done in v8
+
+## 6.10.2026, 10:00
+
+> please update also my app for controlling my keyboard G815. Sometimes it is losing connection with the key, and then when I press M1 for example by accident on my keyboard it resets my layout. But it comes back sometimes, but not always. There was once it didn't come. So please, if you can, add some button to force detection of the keyboard and update the presets. Or yes, if it's not working I manually can kind of force it to recheck keyboard and it is going to scan and inform me what's wrong, why there is no right preset there
+
+1. A button that forces detection of the keyboard and re-sends the presets; when it fails it scans and says what is wrong (why the right preset is not there). The loss: after M1 is pressed by accident the layout resets and does not always come back. **Status:** open.
