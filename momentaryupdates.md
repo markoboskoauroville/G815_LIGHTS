@@ -110,3 +110,5 @@ painted yellow on screen; "Saving Not Supported".
 ## 6.10.2026
 
 > for lasso selection, I mean by lasso is a square selection, so just turn in G815 Lights application instead of free lasso. It needs to draw squares only
+
+3. Square selection instead of the free lasso. **Status:** done, v11: LASSO now draws a dashed amber rectangle from where the drag starts to the pointer, in any direction; keys whose centre is inside are chosen; shift adds, option takes away. Built and installed (old pid 59022, new pid 91582). Not yet tried by hand.

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 10
+let VERSION = 11
 
 extension Color {
     init(hex: String) {
@@ -47,13 +47,21 @@ struct HSV: Equatable {
 struct Board: View {
     @ObservedObject var store: Store
     @Binding var sel: Set<String>
-    /// LASSO (Marko, 6.10.2026: "add a selection method with the lasso"): a drag draws a free loop; every key whose
-    /// centre is inside is chosen. Shift adds to the choice, Option takes away, plain replaces it.
+    /// LASSO (Marko, 6.10.2026: "add a selection method with the lasso"), then v11: "I mean by lasso is a square
+    /// selection ... it needs to draw squares only". A drag draws a rectangle from where it started to where the pointer
+    /// is; every key whose centre is inside is chosen. Shift adds to the choice, Option takes away, plain replaces it.
     var lasso = false
     var onChosen: () -> Void
     @State private var adding = true
     @State private var lastId: String?
-    @State private var loop: [CGPoint] = []
+    @State private var boxFrom: CGPoint?
+    @State private var boxTo: CGPoint = .zero
+
+    /// the selection box, from the corner the drag started at to the pointer, whichever way it was dragged
+    private var box: CGRect? {
+        guard let a = boxFrom else { return nil }
+        return CGRect(x: min(a.x, boxTo.x), y: min(a.y, boxTo.y), width: abs(boxTo.x - a.x), height: abs(boxTo.y - a.y))
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -68,18 +76,19 @@ struct Board: View {
                 ForEach(store.layout.banks, id: \.l) { b in
                     bankCap(b, u).offset(x: pad + b.x * u + 2, y: pad + b.y * u + 2)
                 }
-                if loop.count > 1 {
-                    Path { p in p.addLines(loop); p.closeSubpath() }
+                if let r = box {
+                    Path { p in p.addRect(r) }
                         .fill(Color.amber.opacity(0.12))
-                    Path { p in p.addLines(loop); p.closeSubpath() }
-                        .stroke(Color.amber, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round, dash: [6, 4]))
+                    Path { p in p.addRect(r) }
+                        .stroke(Color.amber, style: StrokeStyle(lineWidth: 1.5, lineJoin: .miter, dash: [6, 4]))
                 }
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onChanged { g in
                     if lasso {
-                        if loop.isEmpty || hypot(g.location.x - loop.last!.x, g.location.y - loop.last!.y) > 3 { loop.append(g.location) }
+                        if boxFrom == nil { boxFrom = g.startLocation }
+                        boxTo = g.location
                         return
                     }
                     let p = CGPoint(x: (g.location.x - pad) / u, y: (g.location.y - pad) / u)
@@ -96,11 +105,10 @@ struct Board: View {
                 }
                 .onEnded { _ in
                     if lasso {
-                        defer { loop = [] }
-                        guard loop.count > 2 else { return }
-                        var shape = Path(); shape.addLines(loop); shape.closeSubpath()
+                        defer { boxFrom = nil }
+                        guard let r = box, r.width > 2 || r.height > 2 else { return }
                         let inside = Set(store.layout.keys.filter { k in
-                            shape.contains(CGPoint(x: pad + (k.x + k.w / 2) * u, y: pad + (k.y + k.h / 2) * u))
+                            r.contains(CGPoint(x: pad + (k.x + k.w / 2) * u, y: pad + (k.y + k.h / 2) * u))
                         }.map(\.id))
                         let mods = NSEvent.modifierFlags
                         if mods.contains(.option) { sel.subtract(inside) }
@@ -308,7 +316,7 @@ struct MainView: View {
                     let k = store.key(f)
                     for c in store.layout.keys where store.key(c.id) == k { sel.insert(c.id) }
                 }
-                Text(lasso ? (sel.isEmpty ? "draw a loop around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
+                Text(lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
                            : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
             }
             HStack(alignment: .top, spacing: 30) {
