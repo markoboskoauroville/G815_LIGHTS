@@ -236,4 +236,146 @@ say so).
 
 ### Results
 
-(the Mac's Claude Code writes here)
+Run on the Mac, 8.10.2026, 05:05–06:52, branch `claude/upbeat-mendel-yhjx3q`, v17. Marko pressed the keys; everything
+else was done by the Mac's Claude Code (Hammerspoon clicks in the window, keys typed by Hammerspoon, the keyboard read
+through his camera with `tests/kbshot.sh`). New helper: `tests/ask.swift` + `tests/press.sh` show the key to press in a
+box on the big screen (the voice says only the key's name); the box goes when the probe or the app's log shows that key.
+
+### The answer in one paragraph
+
+**MR and the G keys only speak HID++ while 0x8010 software control is on.** With `8010:2:01`: G1 → `11 ff 0a 00 01`
+(release `0a 00 00`), G5 → `0a 00 10`, MR → `11 ff 0c 00 01` / `0c 00 00`, M2 → `11 ff 0b 00 02` **and**
+`11 ff 11 00 00 02` (the bank still switches). With `8010:2:00` (onboard): G1 and MR send nothing over HID++; the M keys
+send only `11 ff 11 00 00 0N` (0x8100 OnboardProfiles, index 0x11). And in onboard mode **G1–G5 type F1–F5**
+(Marko: "when I press G1 my Speechify is popping up" — Speechify is his F1). So v17 can never hear MR in a bank with no
+G-key macro, and outside such a bank G1 opens Speechify. Marko's request (momentaryupdates.md item 13, word for word):
+"Please detach G's with functions." G HUB keeps 0x8010 on all the time it runs. Proposal: 0x8010 software control on in
+every bank while the app runs; a G key with no macro does nothing; MR always records. For when the app is not
+running: G1–G5 set to nothing in the onboard profiles (0x8100).
+
+### Part A — probe, app stopped
+
+**0. Install — PASS.** `built build/g815 and build/G815 Lights.app (v17)`.
+
+**1. App stopped — PASS** (`launchctl bootout`, `pgrep -l G815Lights` empty). Odd: at 05:14:23, during a probe, the app
+started again on its own as `application.community.auroville.g815lights…` (the window app, launched by LaunchServices,
+not the agent). That run's empty `0a/0b/0c` notes were the app's start, not a key; it was quit and the probes redone.
+
+**2. Features — PASS.**
+
+    0x0a  0x8010 v0  GKeys        0x0b  0x8020 v0  MKeys       0x0c  0x8030 v0  MR
+    0x0d  0x8040 v0  BrightnessControl   0x0f 0x8071 RGBEffects   0x10 0x8081 v2 PerKeyLightingV2
+    0x11  0x8100 v0  OnboardProfiles     (and 0x00–0x09, 0x0e, 0x12–0x17: Root … 0x1eb0)
+
+**3. Read-only — PASS.**
+
+    8010:0  index 0x0a  reply 05 00 …     (5 G keys)
+    8020:0  index 0x0b  reply 03 00 …     (3 M keys)
+    8030:0  index 0x0c  reply 00 00 …     (MR answers 0, not 1)
+
+**4. As it is (onboard), one key per box — MR and G1 send nothing.**
+
+    MR  → nothing (box closed by a click)          G1 → nothing, and no key reached macOS's session tap
+    M2  → 12.46  heard  11 ff 11 00 00 02 …        M1 → 2.94  heard  11 ff 11 00 00 01 …
+    MR  → nothing (click)
+
+Repeated at the end of Part A (`8010:2:00`): G1 nothing (click after 14 s), MR nothing (click after 8 s). Note: G1 does
+type F1 in onboard mode (Marko, Speechify), but the box's listen-only tap did not see it; probably Speechify's own
+hotkey tap takes F1 first.
+
+**5. G keys under software control (`8010:2:01`) — PASS, the key result.** Each probe starts with the three empty notes
+the call causes (`0a`, `0b`, `0c`, all zero). Then:
+
+    G1 → 5.81  heard  11 ff 0a 00 01 00 …   5.96  heard  11 ff 0a 00 00 00 …
+    G5 → 4.77  heard  11 ff 0a 00 10 00 …   4.96  heard  11 ff 0a 00 00 00 …
+    M2 → 5.36  heard  11 ff 0b 00 02 00 …   5.36  heard  11 ff 11 00 00 02 …   5.54  heard  11 ff 0b 00 00 …
+    M1 → 3.02  heard  11 ff 0b 00 01 00 …   3.02  heard  11 ff 11 00 00 01 …   3.15  heard  11 ff 0b 00 00 …
+    MR → 3.18  heard  11 ff 0c 00 01 00 …   3.43  heard  11 ff 0c 00 00 00 …
+
+M2 still switches the bank by itself (the camera showed M2 lit, colours changed). The first MR and G1 of this round
+closed by a Cmd key and a click while Marko worked elsewhere; repeated cleanly (the lines above). The G5 box closed on
+key code 96 (F5) half a second before the probe's G5 note; possibly G5 also typed F5, not repeated.
+
+**6. MR light by hand — FAIL: not supported.** `8030:1:01` and `8030:1:00` → `HID++ error 7` (invalid function) on
+feature 0x0c; functions 2 and 3 the same. Only function 0 answers (count 0). So the MR light cannot be set this way.
+
+**7. M lights by hand — no visible effect.** `8020:1:01`, `02`, `04`, `00` all answer (`reply 01/02/04/00`), but the
+camera showed only M1 lit in every case, also mid-way through a 6 s hold of `8020:1:04`. In onboard mode the keyboard
+seems to keep its own M lights.
+
+**8. Put back — PASS.** `8010:2:00`, `launchctl bootstrap`. Log, no errors:
+
+    06:00:20.496  start, bank M2
+    06:00:20.509  keyboard on M1, mode 1
+    06:00:21.168  macros: G keys feature 0x0a, MR feature 0x0c
+    06:00:21.180  macros: G1–G5 left to the keyboard
+    06:00:21.287  paint all: bank M2 written
+
+The app started on M2 (an M2 press at 05:18 while the window app ran was saved), so it put the keyboard on M2; M2 lit,
+colours right. No stray repaint at start any more, `G1–G5 …` once.
+
+### Part B — the app running
+
+`macros: key tap on` at every start (Accessibility from T2 held).
+
+**9. Editor + any key — PASS.** MACROS, `+` (MACRO 1), `+ TEXT`, `hello`, F5 on the drawing, `PUT MACRO 1 HERE` →
+`macros: F5 plays MACRO 1 in M1`. F5 in a new TextEdit document → `macros: played MACRO 1`, `hello` typed; F5's own
+action did not happen. (TextEdit then offers its "Hello" autocorrect bubble; the first run showed "Hello" for that
+reason. Repeated cleanly in M2 with MACRO 2: `hello` exactly.)
+RECORD → `x`, `y` → STOP → `macros: recorded 2 keys`, the steps shown:
+
+    1 ↓ X   2 WAIT ms 125   3 ↑ X   4 WAIT ms 441   5 ↓ Y   6 WAIT ms 123   7 ↑ Y        2 keys · 689 ms
+
+Odd: (a) RECORD replaces the macro's steps (the TEXT step was gone). (b) While recording, the TEXT step's field still
+had the keyboard focus, so `xy` was also typed into it (it read `xy` until STOP replaced the steps); RECORD should take
+the focus away from the fields. F5 then typed `Xy` in TextEdit (key steps play).
+
+**10. G1 — PASS.** G1 on the drawing, `PUT MACRO 1 HERE` →
+
+    06:09:58.627  macros: G1 plays MACRO 1 in M1
+    06:09:58.679  macros: G1–G5 under the app
+    06:12:00.161  G keys: 11 ff 0a 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    06:12:00.162  macros: played MACRO 1                    (TextEdit: Xy)
+
+MR now: `06:10:34.072  MR: 11 ff 0c 00 01 …` → `macros: MR: press the key that will play the macro (MR again cancels)`;
+`06:10:39.908  MR: 11 ff 0c 00 01 …` → `macros: MR: cancelled`. Odd: only the press is logged (`00 01`), the release
+(`00 00`) is quiet, fine. The MR light did not come on (step 6: function 1 is refused, so `mrLight` cannot work).
+The first G1 of this step played but its `xy` went to whatever app Marko was in (he was working); not a bug.
+
+**11. Banks — PASS.** M2 in the window → `06:12:15.645 paint all: bank M2 chosen`, `macros: G1–G5 left to the
+keyboard`; G1 then is F1 again (Speechify popped up, see above). M1 → `macros: G1–G5 under the app`;
+`06:20:08.948 G keys: 11 ff 0a 00 01 …` → `played MACRO 1`, TextEdit got `Xy`.
+
+**12. After a restart — PASS.** `launchctl kickstart -k …`:
+
+    06:31:09.883  start, bank M1
+    06:31:10.014  macros: G keys feature 0x0a, MR feature 0x0c
+    06:31:10.049  macros: key tap on
+    06:31:10.049  macros: G1–G5 under the app
+    06:31:20.574  macros: played MACRO 1                    (F5, typed by Hammerspoon)
+    06:51:58.325  G keys: 11 ff 0a 00 01 …  →  macros: played MACRO 1   (G1 by Marko, after RECHECK too; TextEdit: Xy)
+
+The drawing marked F5 and G1 with their macro dots; M2's F5 still had MACRO 2.
+
+**13. Clean up — PASS, with a UI note.** M1: F5 → `TAKE IT AWAY` → `macros: F5: no macro in M1`; F5 then typed as
+before (no `played`). M2: with MACRO 1 selected in the list, F5 (which had MACRO 2) offered only `PUT MACRO 1 HERE`,
+no `TAKE IT AWAY`; one click put MACRO 1 on it (`macros: F5 plays MACRO 1 in M2`). Selecting the key's own macro
+then gave `TAKE IT AWAY` → `macros: F5: no macro in M2`. TAKE IT AWAY should be there whenever the key has any macro.
+Saved: `[m.get('macros') for m in memories]` → `[{'b4': 'B320C922-…'}, {}, {}]` (G1 in M1 only).
+RECHECK KEYBOARD:
+
+    check: Input Monitoring: allowed
+    check: USB: the G815 is plugged in
+    check: Accessibility: allowed (macros can play, any key can start one)
+    check: No other program is driving the keyboard
+    check: Opened the keyboard again from nothing: G815 096D33673635
+    check: The keyboard's onboard mode: 1
+    check: G1–G5 can play macros (G-key feature 0x8010 at 0x0a)
+    check: MR can record (MR feature 0x8030 at 0x0c)
+    check: M1: memory already right; on the Mac 115 keys of its own
+    check: M2: memory already right; on the Mac 115 keys of its own
+    check: M3: memory already right; on the Mac 115 keys of its own
+    check: The keyboard and the app are on the same bank, M1
+
+Colours (camera, after the recheck): right, as drawn (F1 red, F2 F3 1 green, the rest orange). Odd: in that shot no
+M light was lit (M1 had been lit green all session); the brightness key showed green.
