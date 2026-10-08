@@ -4,17 +4,20 @@ One block: copy it, paste it into Terminal, press Return. The commands run one a
 first one that fails, so nothing runs on top of a failure. Every session that leaves something for the Mac to do
 writes the block here (CLAUDE.md).
 
-## Now: merge the work into main and install it (8.10.2026)
+## Now: test the macros (v15) with the Claude Code on this Mac (8.10.2026)
 
-The branch `claude/upbeat-mendel-yhjx3q` holds v12–v14: SINGLE selection, the GitHub build, the version number
-that opens GitHub, and the app updating itself. This puts it on main, sends main to GitHub, builds and installs.
+Fetches the branch with v15, puts this folder on it, and starts Claude Code on test T1 in TESTS.md. Claude Code
+builds and installs v15 itself, asks you to press keys (G1, MR …) and to allow Accessibility, then writes the
+results into TESTS.md and pushes them.
 
 ```sh
-cd ~/Developer/G815_LIGHTS && git checkout main && git pull --ff-only origin main && git fetch origin claude/upbeat-mendel-yhjx3q && git merge --no-edit origin/claude/upbeat-mendel-yhjx3q && git push origin main && ./install.sh
+cd ~/Developer/G815_LIGHTS && git fetch origin claude/upbeat-mendel-yhjx3q && git checkout claude/upbeat-mendel-yhjx3q && git pull --ff-only origin claude/upbeat-mendel-yhjx3q && claude "Read TESTS.md and run test T1 as it says. Write the results into TESTS.md, commit and push them."
 ```
 
-Done when the last line says `built build/g815 and build/G815 Lights.app (v14)` and then `login agent installed
-and started`. The window shows v14 top right.
+Done when Claude Code says "Results pushed". Then tell the cloud session: `Test results are in TESTS.md.`
+
+While this folder is on the test branch, the app does not update itself from main (it says so top right); the
+"Always" block below puts it back on main.
 
 ## Always: build and install what main has
 

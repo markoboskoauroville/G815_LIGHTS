@@ -149,4 +149,4 @@ painted yellow on screen; "Saving Not Supported".
 
 > (8.10.2026) After you build, you need to work with local Claude code for testing. So we are building here and testing in Claude code. It means that in MD need to create MD in repository in GitHub to exchange the test results and give a test task to local CloudCode. And I'm going to copy-paste command between two of you, and you are going to be able to test app on my computer and build it from here from the cloud.
 
-12. TESTS.md in the repo: the cloud session writes the test task, the Claude Code on his Mac runs it on the real keyboard and writes the results back (commit, push); he only carries one line between the two. The rule in CLAUDE.md. **Status:** started
+12. TESTS.md in the repo: the cloud session writes the test task, the Claude Code on his Mac runs it on the real keyboard and writes the results back (commit, push); he only carries one line between the two. The rule in CLAUDE.md. **Status:** done: TESTS.md (how a task runs, T1 for the macros), CLAUDE.md, MANIFEST.md starts T1 on the Mac
