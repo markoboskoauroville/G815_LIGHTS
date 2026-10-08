@@ -154,3 +154,9 @@ painted yellow on screen; "Saving Not Supported".
 > (8.10.2026, ~06:15, on the Mac during T3) before we continue, you need to repeat the text test because I was using a computer. I need to tell you this: G keys are repeating, F keys send the same key command. For example, F1 I'm using to transcribe with Speechify this voice to you, and when I press G1 my Speechify is popping up, which is an undesirable result. So how does the original app Logitech G Hub use it? When it's running, the G keys have special treatment. They're not the same as function keys. Please detach G's with functions. They are doing the same thing
 
 13. G1–G5 never type F1–F5. In onboard mode (0x8010 software control off) the keyboard's own profile makes G1 = F1 … G5 = F5, so G1 opens Speechify (his F1). Measured in T3 (probe): with `8010:2:01` the G keys send only HID++ notes (`11 ff 0a 00 01` for G1, `00 10` for G5) and no F key reaches macOS, and MR sends `11 ff 0c 00 01` too — that is how G HUB holds them while it runs. So: the app keeps 0x8010 software control on in every bank, all the time it runs (not only in a bank with a G macro); a G key with no macro does nothing. When the app is not running the onboard profile still says F1–F5: writing G1–G5 to "nothing" in the onboard profiles (0x8100) would cover that too. **Status:** open, for the cloud (the Mac session does not change app code).
+
+> (8.10.2026, ~07:00, on the Mac) please finish all pending jobs
+
+14. Done on the Mac this time (the Claude Code on his Mac writes the code and tests it on the keyboard), on the branch,
+    then merged into main: item 13 (G keys detached), the MR light, the window notes from T3, the merge, the updater
+    test (item 9), the old statuses tidied. **Status:** started 8.10.2026
