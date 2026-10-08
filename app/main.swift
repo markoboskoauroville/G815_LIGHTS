@@ -96,7 +96,7 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window = w
         }
         window?.makeKeyAndOrderFront(nil)
-        updater?.check()
+        MainActor.assumeIsolated { updater?.check() }
         NSApp.activate(ignoringOtherApps: true)
     }
 
