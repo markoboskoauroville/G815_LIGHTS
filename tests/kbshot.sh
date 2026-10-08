@@ -4,6 +4,6 @@
 OUT="${1:-/tmp/kb.png}"
 ID=$(swift -e 'import CoreGraphics
 let l = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as! [[String: Any]]
-for w in l where (w["kCGWindowOwnerName"] as? String) == "scrcpy" { print(w["kCGWindowNumber"]!); break }' 2>/dev/null)
+for w in l where (w["kCGWindowOwnerName"] as? String)?.lowercased() == "scrcpy" { print(w["kCGWindowNumber"]!); break }' 2>/dev/null)
 [ -n "$ID" ] || { echo "kbshot: no scrcpy window"; exit 1; }
 screencapture -x -o -l "$ID" "$OUT" && sips -r 270 "$OUT" >/dev/null && echo "$OUT"
