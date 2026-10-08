@@ -28,6 +28,17 @@ struct Bank: Codable {
     var name: String
     var base = KeyLight(c: "ffffff", b: 100)
     var keys: [String: KeyLight] = [:]
+    /// v15: which key plays which macro in this bank (key id → Macro.uid), as the colours: one set per M
+    var macros: [String: String] = [:]
+}
+extension Bank {
+    init(from d: Decoder) throws {          // banks saved before v15 have no macros
+        let k = try d.container(keyedBy: CodingKeys.self)
+        name = try k.decode(String.self, forKey: .name)
+        base = try k.decodeIfPresent(KeyLight.self, forKey: .base) ?? KeyLight(c: "ffffff", b: 100)
+        keys = try k.decodeIfPresent([String: KeyLight].self, forKey: .keys) ?? [:]
+        macros = try k.decodeIfPresent([String: String].self, forKey: .macros) ?? [:]
+    }
 }
 
 /// A saved colour + brightness. Its name may be empty (only the swatch shows) or automatic, made from the colour
@@ -86,6 +97,8 @@ struct Settings: Codable {
         Preset(name: "WHITE", c: "ffffff", b: 100), Preset(name: "WARM", c: "ff8a2a", b: 100),
         Preset(name: "DIM", c: "ffffff", b: 25), Preset(name: "OFF", c: "000000", b: 0),
     ]
+    /// v15: every macro, whichever bank uses it (Macros.swift)
+    var macros: [Macro] = []
 
     init() {}
     init(from d: Decoder) throws {          // settings saved before v9 have no "locked"
@@ -94,6 +107,7 @@ struct Settings: Codable {
         active = try k.decodeIfPresent(Int.self, forKey: .active) ?? 1
         locked = try k.decodeIfPresent(Bool.self, forKey: .locked) ?? false
         presets = try k.decodeIfPresent([Preset].self, forKey: .presets) ?? presets
+        macros = try k.decodeIfPresent([Macro].self, forKey: .macros) ?? []
     }
 }
 
@@ -142,6 +156,12 @@ final class Store: ObservableObject {
 
     let layout: KeyLayout
     let wire = Wire()
+    /// v15: the macros, their recorder and player (Macros.swift)
+    lazy var macros = Macros(store: self)
+    /// where G1–G5 (0x8010) and MR (0x8030) speak from on this firmware, and whether G1–G5 are the app's now
+    private var gIdx: UInt8?
+    private var mrIdx: UInt8?
+    private var gSoft: Bool?
     private var dirty = Set<String>()
     private var paintQueued = false
     private var bankTimer: Timer?
@@ -168,8 +188,7 @@ final class Store: ObservableObject {
         // while a replayed login painted them in 4 s, so something reloads the keyboard after the app's paint).
         // Whatever it says, paint again shortly; the bank switch from an M key is still found by poll().
         wire.onUnasked = { [weak self] m in
-            Store.log("keyboard says: " + hex(m))
-            DispatchQueue.main.async { self?.repaintSoon("keyboard spoke") }
+            DispatchQueue.main.async { self?.heard(m) }
         }
     }
 
@@ -209,6 +228,46 @@ final class Store: ObservableObject {
     func paintAll(_ why: String = "") {
         if !why.isEmpty { Store.log("paint all: " + why) }
         paint(layout.keys.map(\.id))
+        syncGKeys()
+    }
+
+    // ------------------------------------------------------------ G1–G5 and MR (macros)
+    /// The keyboard's own news. G1–G5 and MR go to the macros; anything else is logged and the keys painted again
+    /// (MEASURED 3.10.2026: after a real boot the bank's per-key colours were lost while a replayed login painted
+    /// them in 4 s, so something reloads the keyboard after the app's paint).
+    func heard(_ m: [UInt8]) {
+        if m.count >= 6, m[3] >> 4 == 0 {
+            if let g = gIdx, m[2] == g {
+                Store.log("G keys: " + hex(m))
+                macros.gKeys(Int(m[4]) | Int(m[5]) << 8); return
+            }
+            if let r = mrIdx, m[2] == r {
+                Store.log("MR: " + hex(m))
+                macros.mr(m[4] & 1 != 0); return
+            }
+        }
+        Store.log("keyboard says: " + hex(m))
+        repaintSoon("keyboard spoke")
+    }
+
+    /// G1–G5 are the app's (0x8010 software control on) only in a bank that gives one of them a macro, or while MR
+    /// waits for a key; everywhere else they do what the keyboard makes them do. Called with every paintAll, so a
+    /// replug, a wake or an M key puts it right again.
+    func syncGKeys() {
+        let want = KeyCodes.gKeys.contains { bank.macros[$0] != nil } || macros.rec != .idle
+        wire.run { [weak self] kb in
+            let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
+            var done = false
+            if let g { done = (try? kb.call(g, 2, [want ? 1 : 0])) != nil }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if g != self.gIdx || r != self.mrIdx {
+                    Store.log("macros: G keys feature " + (g.map { String(format: "0x%02x", $0) } ?? "none") + ", MR feature " + (r.map { String(format: "0x%02x", $0) } ?? "none"))
+                }
+                self.gIdx = g; self.mrIdx = r
+                if done && self.gSoft != want { self.gSoft = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
+            }
+        }
     }
 
     private var repaintTimer: Timer?
@@ -392,6 +451,8 @@ final class Store: ObservableObject {
             let id = (a.bundleIdentifier ?? "").lowercased(), name = (a.localizedName ?? "").lowercased()
             return id == "community.auroville.g815lights" || name.contains("g hub") || name.contains("lghub") || name.contains("openrgb") || name.contains("logi options")
         }.compactMap(\.localizedName)
+        let ax = AXIsProcessTrusted()
+        say(ax, ax ? "Accessibility: allowed (macros can play, any key can start one)" : "Accessibility is OFF: macros cannot play. System Settings › Privacy & Security › Accessibility: switch G815 Lights on.")
         say(rivals.isEmpty, rivals.isEmpty ? "No other program is driving the keyboard" : "Also talking to the keyboard: " + rivals.joined(separator: ", ") + ". Quit it, then RECHECK; two programs fight over the lights.")
         // 4. on the wire: open from nothing, read, bring the banks in line, paint
         let want = s.active
@@ -408,6 +469,9 @@ final class Store: ObservableObject {
             let now = Int(try kb.call(ob, 4)[1])
             let mode = try kb.onboardMode()
             add(nil, "The keyboard's onboard mode: \(mode)")
+            let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
+            add(g != nil, g.map { String(format: "G1–G5 can play macros (G-key feature 0x8010 at 0x%02x)", $0) } ?? "No G-key feature 0x8010: G1–G5 cannot play macros. Tell Claude.")
+            add(r != nil, r.map { String(format: "MR can record (MR feature 0x8030 at 0x%02x)", $0) } ?? "No MR feature 0x8030: record in the window instead. Tell Claude.")
             for (i, keys, logo, set) in banks {
                 let d = try kb.readSector(i)
                 let stored = UInt16(d[SECTOR - 2]) << 8 | UInt16(d[SECTOR - 1])

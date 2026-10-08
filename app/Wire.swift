@@ -42,7 +42,15 @@ final class Wire: Thread {
     override func main() {
         while true {
             lock.lock()
-            while jobs.isEmpty { lock.wait() }
+            // with the keyboard open, look at what it said every 20 ms (a G key must play at once, not at the next poll)
+            while jobs.isEmpty {
+                if let k = kb {
+                    lock.unlock(); k.drain(); lock.lock()
+                    if jobs.isEmpty { _ = lock.wait(until: Date().addingTimeInterval(0.02)) }
+                } else {
+                    lock.wait()
+                }
+            }
             let job = jobs.removeFirst()
             if fresh { fresh = false; kb = nil }
             running = true

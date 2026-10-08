@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 14
+let VERSION = 15
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
@@ -60,6 +60,9 @@ struct Board: View {
     /// SINGLE (Marko, 8.10.2026: "I can select only one key at the time for modifications"): the key under the
     /// pointer is the only one chosen; a drag moves the choice from key to key.
     var mode = SelectMode.paint
+    /// v15: MR in the drawing opens the macros; its colour says what the recorder is doing
+    var mrColor = Color.bankYellow.opacity(0.32)
+    var onMR: () -> Void = {}
     var onChosen: () -> Void
     @State private var adding = true
     @State private var lastId: String?
@@ -102,7 +105,7 @@ struct Board: View {
                     }
                     let p = CGPoint(x: (g.location.x - pad) / u, y: (g.location.y - pad) / u)
                     if g.translation == .zero, let b = store.layout.banks.first(where: { p.x >= $0.x && p.x < $0.x + 1 && p.y >= $0.y && p.y < $0.y + 1 }) {
-                        if b.i > 0 { store.choose(b.i) }
+                        if b.i > 0 { store.choose(b.i) } else { onMR() }
                         return
                     }
                     guard let k = store.layout.keys.first(where: { p.x >= $0.x && p.x < $0.x + $0.w && p.y >= $0.y && p.y < $0.y + $0.h }) else { return }
@@ -147,13 +150,18 @@ struct Board: View {
                 .foregroundColor(dark ? Color(hex: "26272A") : lit)
                 .lineLimit(1).minimumScaleFactor(0.5).padding(2)
             if chosen { RoundedRectangle(cornerRadius: 5).strokeBorder(Color.amber, lineWidth: 2) }
+            // a key that plays a macro in this bank: a small sand dot in its corner
+            if store.bank.macros[k.id] != nil {
+                Circle().fill(Color.sand).frame(width: 5, height: 5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(5)
+            }
         }
         .frame(width: k.w * u - 4, height: k.h * u - 4)
     }
 
     private func bankCap(_ b: BankCap, _ u: Double) -> some View {
         let active = b.i == store.s.active
-        let col = b.i == 0 ? Color.dead : Color.bankYellow.opacity(active ? 1 : 0.32)
+        let col = b.i == 0 ? mrColor : Color.bankYellow.opacity(active ? 1 : 0.32)
         return ZStack {
             RoundedRectangle(cornerRadius: 5).fill(Color.cap)
             Text(b.l).font(mono(max(9, u * 0.3))).foregroundColor(col)
@@ -232,6 +240,10 @@ struct NumField: View {
 struct MainView: View {
     @ObservedObject var store: Store
     @ObservedObject var updater: Updater
+    @ObservedObject var macros: Macros
+    /// v15: MR opens the macros in place of the colours
+    @State private var macroView = false
+    @State private var modeBefore = SelectMode.paint
     @State private var sel = Set<String>()
     @State private var hsv = HSV(h: 0, s: 0, v: 1)
     @State private var keyB = 100
@@ -287,6 +299,18 @@ struct MainView: View {
         store.set(sel, c: hsv.hex, b: keyB)
     }
 
+    /// MACROS on: one key at a time (the key a macro goes on); off: the selection mode he had
+    private func toggleMacros() {
+        macroView.toggle()
+        if macroView {
+            modeBefore = mode; mode = .single
+            if sel.count > 1 { sel = [] }
+            macros.askPermission()
+        } else {
+            mode = modeBefore
+        }
+    }
+
     private func pickFromSelection() {
         guard let id = sel.first else { return }
         let k = store.key(id)
@@ -320,7 +344,9 @@ struct MainView: View {
                     Text("LOCK M\(store.s.active): M keys on the keyboard do nothing").font(mono(11, .regular)).foregroundColor(.sand)
                 }.toggleStyle(.checkbox)
             }
-            Board(store: store, sel: $sel, mode: mode, onChosen: pickFromSelection)
+            Board(store: store, sel: $sel, mode: mode,
+                  mrColor: macros.rec != .idle ? Color(hex: "FF3B30") : Color.bankYellow.opacity(macroView ? 1 : 0.32),
+                  onMR: toggleMacros, onChosen: pickFromSelection)
                 .aspectRatio(store.layout.w / store.layout.h, contentMode: .fit)
             HStack(spacing: 4) {
                 label("KEYS").padding(.trailing, 6)
@@ -335,6 +361,7 @@ struct MainView: View {
                     mode = mode == .single ? .paint : .single
                     if mode == .single, sel.count > 1 { sel = [] }
                 }
+                Word(text: "MACROS", state: macroView ? .on : .off) { toggleMacros() }
                 Word(text: "SAME COLOUR", state: mode == .single ? .dead : .off) {
                     guard mode != .single, let f = sel.first else { return }
                     let k = store.key(f)
@@ -344,6 +371,9 @@ struct MainView: View {
                      : mode == .lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
                      : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
             }
+            if macroView {
+                MacroPanel(store: store, macros: macros, chosen: sel.count == 1 ? sel.first : nil)
+            } else {
             HStack(alignment: .top, spacing: 30) {
                 VStack(alignment: .leading, spacing: 10) {
                     label("COLOUR")
@@ -418,6 +448,7 @@ struct MainView: View {
                         Text("\(Int(brightD))%").font(mono(15)).foregroundColor(.sand).frame(width: 56, alignment: .trailing)
                     }
                 }
+            }
             }
         }
         // the RECHECK report floats over the board, so the window's layout never grows (inline, it blanked the window)

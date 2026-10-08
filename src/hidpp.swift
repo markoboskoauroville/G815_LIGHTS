@@ -82,6 +82,14 @@ final class G815 {
         throw HidppError(text: String(format: "no answer from feature index 0x%02x function %d", index, function))
     }
 
+    /// Between jobs: whatever the keyboard said on its own (G1–G5, MR, a reload) delivered now, not at the next call
+    func drain() {
+        while CFRunLoopRunInMode(.defaultMode, 0, true) == .handledSource {}
+        let got = inbox
+        inbox.removeAll()
+        for m in got where unasked(m) { onUnasked?(m) }
+    }
+
     /// Our replies carry SW_ID in the low nibble of the function byte (byte 4 of an error); anything else is
     /// the keyboard speaking on its own.
     private func unasked(_ m: [UInt8]) -> Bool {

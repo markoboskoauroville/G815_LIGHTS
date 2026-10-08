@@ -90,7 +90,7 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             w.backgroundColor = NSColor(red: 0x0B / 255, green: 0x0D / 255, blue: 0x10 / 255, alpha: 1)
             w.isReleasedWhenClosed = false
             w.delegate = self
-            w.contentView = NSHostingView(rootView: MainView(store: store, updater: updater))
+            w.contentView = MainActor.assumeIsolated { NSHostingView(rootView: MainView(store: store, updater: updater, macros: store.macros)) }
             w.setFrameAutosaveName("G815LightsMain")
             if !w.setFrameUsingName("G815LightsMain") { w.center() }
             window = w
