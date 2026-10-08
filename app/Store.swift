@@ -548,7 +548,7 @@ final class Store: ObservableObject {
             let mode = try kb.onboardMode()
             add(nil, "The keyboard's onboard mode: \(mode)")
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
-            add(g != nil, g.map { String(format: "G1–G5 can play macros (G-key feature 0x8010 at 0x%02x)", $0) } ?? "No G-key feature 0x8010: G1–G5 cannot play macros. Tell Claude.")
+            add(g != nil, g.map { String(format: "G1–G5 are the app's: macros or nothing, never F1–F5 (G-key feature 0x8010 at 0x%02x)", $0) } ?? "No G-key feature 0x8010: G1–G5 cannot play macros. Tell Claude.")
             add(r != nil, r.map { String(format: "MR can record (MR feature 0x8030 at 0x%02x)", $0) } ?? "No MR feature 0x8030: record in the window instead. Tell Claude.")
             for (i, keys, logo, set) in banks {
                 let d = try kb.readSector(i)
