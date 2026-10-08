@@ -409,6 +409,7 @@ the brightness as measured squares, the recording focus. LESSONS 16–20 have th
 | ☼ on the keyboard in host mode | PASS | `keyboard says: 11 ff 0d 00 …`; the level stepped 12 → 0 (the key's own cycle); set back to 12 |
 | Keyboard brightness squares | PASS | square 100 → `brightness 100`, square 12 → `brightness 12` |
 | Key brightness squares | PASS | ESC: square 30 → `{'b': 30}`, square 100 → `{'b': 100}` in settings.json |
+| The self-update (item 9) | PASS | v19 pushed to main from another clone; window opened → `update: v18 → v19: pull and build` → `v19 built, restarting when the window is closed`; window closed → `08:53:31 update: restarting into v19` → `quit: … on M1` → `watching …, v19` → host mode again |
 | MR light | NOT POSSIBLE | 0x8030 fn 1 error 7 in both modes; 0x8020 bit 3 error 2; no free per-key index lights it (LESSONS 18) |
 
 Corrections to T3's notes: TAKE IT AWAY does show whenever the key has a macro (MacroViews line 72); the T3 crop was
