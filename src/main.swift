@@ -54,10 +54,33 @@ func run() throws {
         }
         let which = args[1] == "all" ? [1, 2, 3] : [Int(args[1])!]
         for p in which { print(try kb.setOnboardStatic(profile: p, keys: rgb(args[2]), logo: rgb(args[3]))) }
+    case "probe":
+        // g815 probe <seconds> [feature:fn[:bytes]] ... — the calls in order (each reply or error printed), then every
+        // report the keyboard sends on its own for <seconds>, timed (T3, 8.10.2026: what do MR, G1, M1..M3 send?)
+        // e.g.  g815 probe 20 8010:2:01     G-key software control on, then 20 s of listening
+        setvbuf(stdout, nil, _IONBF, 0)
+        let start = Date()
+        func t() -> String { String(format: "%6.2f", Date().timeIntervalSince(start)) }
+        kb.onUnasked = { m in print("\(t())  heard  \(hex(m))") }
+        for a in args.dropFirst(2) {
+            let p = a.split(separator: ":")
+            guard p.count >= 2, let fid = UInt16(p[0], radix: 16), let fn = UInt8(p[1]) else { print("bad call \(a)"); continue }
+            let bytes = p.count > 2 ? stride(from: 0, to: p[2].count, by: 2).compactMap { i -> UInt8? in
+                let s = p[2].dropFirst(i).prefix(2); return UInt8(s, radix: 16) } : []
+            do {
+                guard let i = try kb.index(of: fid) else { print("\(t())  \(a)  no such feature"); continue }
+                print("\(t())  \(a)  index 0x\(String(format: "%02x", i))  reply \(hex(try kb.call(i, fn, bytes)))")
+            } catch { print("\(t())  \(a)  error \(error)") }
+        }
+        let secs = Double(args.count > 1 ? args[1] : "0") ?? 0
+        if secs > 0 { print("\(t())  listening \(Int(secs)) s: press the keys now") }
+        while Date().timeIntervalSince(start) < secs { kb.drain(); usleep(10_000) }
+        kb.drain()
+        print("\(t())  done")
     case "sector":
         print(hex(try kb.readSector(Int(args[1], radix: 16)!)))
     default:
-        throw HidppError(text: "usage: g815 features | call <feature> <fn> [bytes] | set i:rrggbb... | mode [1|2] | brightness [0-100]")
+        throw HidppError(text: "usage: g815 features | call <feature> <fn> [bytes] | probe <seconds> [feature:fn:bytes ...] | set i:rrggbb... | mode [1|2] | brightness [0-100]")
     }
 }
 

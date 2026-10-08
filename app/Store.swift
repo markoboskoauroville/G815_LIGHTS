@@ -164,6 +164,7 @@ final class Store: ObservableObject {
     /// the M keys' feature (0x8020): its news is ignored, the bank switch is read by poll()
     private var mIdx: UInt8?
     private var gSoft: Bool?
+    private var gLogged: Bool?
     private var dirty = Set<String>()
     private var paintQueued = false
     private var bankTimer: Timer?
@@ -268,16 +269,20 @@ final class Store: ObservableObject {
         wire.run { [weak self] kb in
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
             let mk = (try? kb.index(of: 0x8020)) ?? nil
-            DispatchQueue.main.async { self?.mIdx = mk }
-            var done = false
-            if let g { done = (try? kb.call(g, 2, [want ? 1 : 0])) != nil }
-            DispatchQueue.main.async {
+            // known on the main thread before 0x8010 is called: its three answering notes must find them (T2)
+            DispatchQueue.main.sync {
                 guard let self else { return }
                 if g != self.gIdx || r != self.mrIdx {
                     Store.log("macros: G keys feature " + (g.map { String(format: "0x%02x", $0) } ?? "none") + ", MR feature " + (r.map { String(format: "0x%02x", $0) } ?? "none"))
                 }
-                self.gIdx = g; self.mrIdx = r
-                if done { self.gSoft = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
+                self.mIdx = mk; self.gIdx = g; self.mrIdx = r
+            }
+            var done = false
+            if let g { done = (try? kb.call(g, 2, [want ? 1 : 0])) != nil }
+            DispatchQueue.main.async {
+                guard let self, done else { return }
+                self.gSoft = want
+                if self.gLogged != want { self.gLogged = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
             }
         }
     }

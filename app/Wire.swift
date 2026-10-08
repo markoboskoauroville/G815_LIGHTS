@@ -37,6 +37,9 @@ final class Wire: Thread {
 
     /// RECHECK (Marko, 6.10.2026): the next job closes the keyboard and opens it again from nothing, as at a replug
     private var fresh = false
+    /// T2 (8.10.2026): while Accessibility was switched on, writes failed (0xe00002e2) and the keyboard was reopened
+    /// 422 times in 6 s. After a failure the next open waits until a second has passed.
+    private var failedAt = Date.distantPast
     func reopen() { lock.lock(); fresh = true; lock.unlock() }
 
     override func main() {
@@ -57,10 +60,15 @@ final class Wire: Thread {
             lock.unlock()
             defer { lock.lock(); running = false; lock.unlock() }
             do {
-                if kb == nil { kb = try G815(); kb!.onUnasked = onUnasked; onOpen?() }
+                if kb == nil {
+                    let wait = 1 - Date().timeIntervalSince(failedAt)
+                    if wait > 0 { Thread.sleep(forTimeInterval: wait) }
+                    kb = try G815(); kb!.onUnasked = onUnasked; onOpen?()
+                }
                 try job(kb!)
             } catch {
                 kb = nil
+                failedAt = Date()
                 onError?("\(error)")
             }
         }

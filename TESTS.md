@@ -110,7 +110,9 @@ allowed` or `macros: key tap on` in the log by 04:31.
 
 ## T2 — macros again, after the loop fix (v16), 8.10.2026
 
-**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** open
+**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** loop gone, Accessibility on, updater clean; **MR sends nothing**
+in onboard mode (step 3), so 4–10 did not run. Also a reopen storm (422 in 6 s) while Accessibility was switched on.
+v17: a 1 s pause before reopening after a failure; T3 measures MR with `g815 probe` and tests the macros without MR.
 
 v16: the G-key mode (0x8010) is sent only when it changes, at start, after a reopen and after a bank switch; the
 notes from the G, M and MR features (0x0a 0x0b 0x0c on this keyboard) never repaint, and empty ones are not logged.
@@ -188,3 +190,50 @@ and 10 (colours) could run alone; left for the next round so the MR answer reach
 untouched to the eye during the session (not checked key by key).
 
 **11. Updater check — PASS.** `git status --porcelain` after the install: empty.
+
+---
+
+## T3 — what MR, G1 and M1–M3 really send; macros without MR (v17), 8.10.2026
+
+**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** open
+
+v17: after a failure the keyboard is reopened at most once a second (T2's storm); the G/M/MR feature indexes are
+known before the G-key call (no stray repaint at start); `G1–G5 …` logged only when it changes. New:
+`build/g815 probe <seconds> [feature:fn:bytes ...]` makes the calls, then prints everything the keyboard sends.
+
+Part A is a measurement, with the app STOPPED (two programs on the keyboard interleave, LESSONS 8). Paste every
+probe's whole output. Marko presses the keys; say exactly when, one key every 3 seconds, and what he sees on the
+keyboard (MR light, M lights, did the colours change bank?).
+
+0. Pull, `./install.sh`: expect `(v17)`.
+1. Stop the app: `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/community.auroville.g815lights.plist`;
+   `pgrep -l G815Lights` must print nothing.
+2. `build/g815 features` (the whole list).
+3. Read-only: `build/g815 probe 0 8010:0 8020:0 8030:0`.
+4. **As it is:** `build/g815 probe 25`. Marko: MR, G1, M2, M1, MR.
+5. **G keys under software control:** `build/g815 probe 25 8010:2:01`. Marko: MR, G1, G5, M2, M1, MR. Does M2 still
+   switch the bank on its own (colours change)?
+6. **MR light by hand:** `build/g815 probe 3 8030:1:01` (MR light on?), then `build/g815 probe 3 8030:1:00`.
+7. **M lights by hand:** `build/g815 probe 3 8020:1:01`, then `8020:1:02`, then `8020:1:04`, then `8020:1:00`
+   (which M lights?). Then `build/g815 probe 3 8020:1:01` again if M1 is the bank, so its light is right.
+8. **Put back:** `build/g815 probe 1 8010:2:00`, then
+   `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/community.auroville.g815lights.plist`, wait 10 s;
+   `tail -n 30 ~/.g815/log.txt` (no errors), colours right on M1.
+
+Part B, the app running (Accessibility is already on from T2; if `macros: key tap on` is not in the log after start,
+say so).
+
+9. **Editor + any key:** window → MACROS. `+` (a new macro), `+ TEXT`, type `hello` in the step. Click **F5** on
+   the drawing, `PUT … HERE`. In TextEdit (a new document) press F5: `hello` appears? F5's own action does not
+   happen? Then RECORD, type `xy`, STOP: quote the steps shown (`↓ X`, `↑ X`, waits …).
+10. **G1:** in the window click **G1** on the drawing, `PUT … HERE` (the same macro). Log: `G1–G5 under the app`.
+    In TextEdit press G1: does the macro play? Quote the `G keys:` lines. Then press MR once: any `MR:` line now?
+11. **Banks:** M2 in the window → log `G1–G5 left to the keyboard`; G1 plays nothing. M1 → G1 plays again.
+12. **After a restart:** `launchctl kickstart -k gui/$(id -u)/community.auroville.g815lights`, 10 s, G1 and F5 in
+    TextEdit still play.
+13. **Clean up:** in the window, F5 → `TAKE IT AWAY` (F5 types as before). RECHECK KEYBOARD: copy the report.
+    Colours right?
+
+### Results
+
+(the Mac's Claude Code writes here)
