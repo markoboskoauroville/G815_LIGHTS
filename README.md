@@ -16,6 +16,7 @@ this one keyboard, nothing else.** Built 2.10.2026 because OpenRGB showed colour
 
 | Document | For |
 |---|---|
+| `MANIFEST.md` | the one block to paste into Terminal now (merge, pull, install) |
 | `TAKEOVER.md` | putting it on a Mac: build, sign, permission, login agent |
 | `LESSONS.md` | what the keyboard really does, measured, and every trap that cost time |
 | `momentaryupdates.md` | his requests, word for word, with a status each |
