@@ -1,6 +1,6 @@
 # TAKEOVER — G815 Lights on a Mac
 
-**Version 4** (`VERSION` in `app/Views.swift`, shown top right in the window). macOS 14+, Apple Silicon, swiftc
+**Version 18** (`VERSION` in `app/Views.swift`, shown top right in the window). macOS 14+, Apple Silicon, swiftc
 only (no Xcode project).
 
 1. **The signing certificate.** Builds are signed with **"Mantra Apps"**, a self-signed code-signing
@@ -33,12 +33,15 @@ only (no Xcode project).
 | `src/onboard.swift` | the keyboard's memory: read/write a sector, CRC-16/CCITT, the 4 lighting blocks |
 | `src/main.swift`, `src/serve.swift` | `build/g815`, the same wire as a command line, for tests |
 | `app/Wire.swift` | the one thread that owns the keyboard; jobs in order, reopens after a replug |
-| `app/Store.swift` | banks, presets, painting, writing banks, following the keyboard's M keys |
+| `app/Store.swift` | banks, presets, painting, writing banks; host mode, G1–G5, MR and the M keys (syncGKeys, mPressed, release) |
+| `app/Macros.swift`, `app/MacroViews.swift` | macros: recorder, player, the key tap (Accessibility), the editor |
+| `app/Update.swift` | the self-update from main |
 | `app/Views.swift` | the window (CAMERA language), the keyboard drawing, the picker |
 | `app/main.swift` | the app: one copy only, login/background, wake and poll |
 | `layout.json` | his keyboard, key by key: light index, legend, place (ISO Enter, 5€, AltGr, no key left of Z) |
 | `tests/kbshot.sh` | the keyboard as his NDI camera sees it (the scrcpy window "Pixel 7"), upright |
 | `tests/click.swift` | a real mouse click or drag, for testing the window |
+| `tests/ask.swift`, `tests/press.sh` | a key for Marko to press, in a box that goes when that key arrives; the probe and a camera shot with it (LESSONS 19) |
 | `tests/drive.py`, `tests/keycolour.py` | the old web page's driver (gone with the page), and a colour meter |
 
 ## The keyboard's command line
@@ -47,6 +50,7 @@ only (no Xcode project).
     build/g815 set 26:ff0000 37:00ff00        light index : rrggbb (Esc red, F1 green)
     build/g815 brightness [0-100]   mode [1|2]   sector <hex>   onboard <1|2|3|all> <keys> <logo>
     build/g815 call <feature> <fn> [bytes]    one raw HID++ call
+    build/g815 probe <s> [feature:fn:bytes …] the calls, then everything the keyboard sends for <s> seconds
 
 **Never read or write the memory from the command line while the app runs a bank write** (LESSONS 8).
 A backup of the factory memory as found on 2.10.2026 is in `~/.g815/backup-2.10.2026/`.
@@ -56,4 +60,5 @@ A backup of the factory memory as found on 2.10.2026 is in `~/.g815/backup-2.10.
 - What the keyboard does in the first second of power-on was seen by Marko, not by a camera (the camera's
   phone sits on the same hub and went dark with it). He saw: his colours, a short black, his colours again.
 - The wake-from-sleep repaint has not been watched (it is the same `paintAll` as a replug).
+- Host mode across a sleep and a real boot (the app takes it over again at every open; not watched through a night).
 - The G HUB "user-stored lighting" slots (Brightness+8/+9 in the manual) were not explored.

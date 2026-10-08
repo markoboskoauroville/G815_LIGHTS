@@ -15,14 +15,14 @@ painted yellow on screen; "Saving Not Supported".
 
 1. Research OpenRGB's G815 code and the keyboard's own protocol (HID++ 2.0). — **Status:** started 2.10.2026
 2. A G815-only app: the keyboard drawn as in OpenRGB's LED view, every key its own colour, and the colour really
-   lands on the keys (the bug in OpenRGB). — **Status:** open
-3. Static colours only, no effects. — **Status:** open
-4. Per-key brightness, on top of the keyboard's own brightness button. — **Status:** open
-5. Key presets: a few named colours, applied to a group of selected keys. — **Status:** open
-6. A few memories (profiles) of his settings. — **Status:** open
+   lands on the keys (the bug in OpenRGB). — **Status:** done (per-key colour through 0x8081, seen on the keys with the camera)
+3. Static colours only, no effects. — **Status:** done (static only; the onboard banks hold one still colour, no effect)
+4. Per-key brightness, on top of the keyboard's own brightness button. — **Status:** done (each key's own brightness; since v18 squares fitted to the measured steps)
+5. Key presets: a few named colours, applied to a group of selected keys. — **Status:** done (presets: named or automatic, drag to reorder)
+6. A few memories (profiles) of his settings. — **Status:** done (M1 M2 M3, each its own layout on the Mac)
 7. Write to the keyboard's onboard memory, so it lights his profile from power-on with no light show.
-   If the keyboard cannot hold per-key static colours, say so plainly. — **Status:** open (to research)
-8. A row in the star menu; loads with the Mac and re-applies the saved settings at every start. — **Status:** open
+   If the keyboard cannot hold per-key static colours, say so plainly. — **Status:** done: the keyboard's memory holds one still colour per zone, not per-key (said in README); per-key comes from the app at every start
+8. A row in the star menu; loads with the Mac and re-applies the saved settings at every start. — **Status:** done (the star's row Keyboard and mouse › G815 Lights; login agent; repaint at every start)
 
 ## 2.10.2026, 02:20 — see the keyboard through the screen, and the camera's white balance
 
@@ -46,8 +46,8 @@ painted yellow on screen; "Saving Not Supported".
 > please match exactly the keyboard view to the real keyboard. So my keyboard is black, so keys should be black with lights on. Also, these memory buttons are yellow on the keyboard, so please you have a screenshot and the look in real life should match as close as possible to the view in our app. Also, build a Swift app. Swiftapp should be the default, and then web app is the second. Actually, you don't need to build with webapp at all. We just can focus on Swift. There is no need for web apps anymore. Swift is great and we work with Swift only now
 
 13. The drawing as the real keyboard: black keycaps, the legend lit in the key's colour; the M1 M2 M3 keys
-    yellow as on the keyboard (the active one lit). Match the camera picture as closely as possible. — **Status:** open
-14. A native Swift app, the only face; no web page. — **Status:** open (this replaces the page and the
+    yellow as on the keyboard (the active one lit). Match the camera picture as closely as possible. — **Status:** done (the drawing as the keyboard; the active M lit)
+14. A native Swift app, the only face; no web page. — **Status:** done (v4 and on; the star only opens it) (this replaces the page and the
     Hammerspoon server; the star's row will start the Swift app)
 
 ## 2.10.2026, 03:20 — permission given; test, login agent, OpenRGB out, the rest
@@ -55,8 +55,8 @@ painted yellow on screen; "Saving Not Supported".
 > Add the permission test all the keyboard. Add the login agent. Okay, I already changed the permissions, so please test it. Open RGB starting automatically, yes. Remove and do all other points. That's great.
 
 15. Input Monitoring granted by Marko: test everything on the real keyboard. — **Status:** started
-16. The login agent (paints at every start, no window). — **Status:** open
-17. OpenRGB out of the login items (he said yes). — **Status:** open
+16. The login agent (paints at every start, no window). — **Status:** done (install.sh writes it; RunAtLoad)
+17. OpenRGB out of the login items (he said yes). — **Status:** done (its agent moved to ~/.g815/OpenRGB.plist.removed-2.10.2026; checked 8.10.2026: not in the login items)
 18. "All other points": app icon, documents (README, TAKEOVER, LESSONS), registry, handover; then the camera's
     white balance and the MIDI apps as Swift-only. — **Status:** open
 
@@ -153,31 +153,35 @@ painted yellow on screen; "Saving Not Supported".
 
 > (8.10.2026, ~06:15, on the Mac during T3) before we continue, you need to repeat the text test because I was using a computer. I need to tell you this: G keys are repeating, F keys send the same key command. For example, F1 I'm using to transcribe with Speechify this voice to you, and when I press G1 my Speechify is popping up, which is an undesirable result. So how does the original app Logitech G Hub use it? When it's running, the G keys have special treatment. They're not the same as function keys. Please detach G's with functions. They are doing the same thing
 
-13. G1–G5 never type F1–F5. In onboard mode (0x8010 software control off) the keyboard's own profile makes G1 = F1 … G5 = F5, so G1 opens Speechify (his F1). Measured in T3 (probe): with `8010:2:01` the G keys send only HID++ notes (`11 ff 0a 00 01` for G1, `00 10` for G5) and no F key reaches macOS, and MR sends `11 ff 0c 00 01` too — that is how G HUB holds them while it runs. So: the app keeps 0x8010 software control on in every bank, all the time it runs (not only in a bank with a G macro); a G key with no macro does nothing. When the app is not running the onboard profile still says F1–F5: writing G1–G5 to "nothing" in the onboard profiles (0x8100) would cover that too. **Status:** open, for the cloud (the Mac session does not change app code).
+13. G1–G5 never type F1–F5. In onboard mode (0x8010 software control off) the keyboard's own profile makes G1 = F1 … G5 = F5, so G1 opens Speechify (his F1). Measured in T3 (probe): with `8010:2:01` the G keys send only HID++ notes (`11 ff 0a 00 01` for G1, `00 10` for G5) and no F key reaches macOS, and MR sends `11 ff 0c 00 01` too — that is how G HUB holds them while it runs. So: the app keeps 0x8010 software control on in every bank, all the time it runs (not only in a bank with a G macro); a G key with no macro does nothing. When the app is not running the onboard profile still says F1–F5: writing G1–G5 to "nothing" in the onboard profiles (0x8100) would cover that too. **Status:** done in v18 on the Mac (8.10.2026), tested on the keyboard: the app holds G1–G5 in every bank and runs the keyboard in host mode (the M light and M keys through the app, LESSONS 17); every bank in the keyboard's memory says \"nothing\" for G1–G5, so with the app stopped G1 typed nothing and Speechify stayed shut. MR is heard in every bank; its own light cannot be set (LESSONS 18).
 
 > (8.10.2026, ~07:00, on the Mac) please finish all pending jobs
 
 14. Done on the Mac this time (the Claude Code on his Mac writes the code and tests it on the keyboard), on the branch,
     then merged into main: item 13 (G keys detached), the MR light, the window notes from T3, the merge, the updater
-    test (item 9), the old statuses tidied. **Status:** started 8.10.2026
+    test (item 9), the old statuses tidied. **Status:** v18 done and tested on the keyboard (TESTS.md T4); merged into
+    main 8.10.2026; the updater test follows with v19.
 
 > (8.10.2026, ~08:15, on the Mac) now you need to work on the brightness slider. Actually, there is no more slider, only plus and minus. And you need to test with the camera the triggering point of the brightness because it's not continuous, it jumps. For each step make plus or minus, so there are no empty steps. Only steps which actually change the brightness exist. Let's do that now you have a camera and you can do it yourself easily
 
 15. The keyboard's brightness: no slider, only − and +; each press goes to the next level the keys really show. The
-    levels measured with the camera (0x8040 swept 0–100). **Status:** started 8.10.2026
+    levels measured with the camera (0x8040 swept 0–100). **Status:** measured (0 12 25 50 100, LESSONS 20); replaced
+    by item 16 before it shipped.
 
 > (8.10.2026, ~08:25, on the Mac) actually, since there are not many levels of brightness, you just make small squares swatches so user can jump directly to brightness level
 
 16. The keyboard's brightness as five small squares, one per real level (OFF 12 25 50 100); a click jumps to it.
-    Replaces item 15's − and +. **Status:** started 8.10.2026
+    Replaces item 15's − and +. **Status:** done in v18, clicked and read back (square 100 → 100, 12 → 12).
 
 > (8.10.2026, ~08:30, on the Mac) of course, keyboard brightness should also affect each individual key. We need to have a key brightness with the same swatches
 > what I mean by that I want to control for each individual key brightness with the same swatches
 > or replacing the key brightness slider
 
-17. KEY BRIGHTNESS (each key's own) as the same five squares, in place of its slider. **Status:** started 8.10.2026
+17. KEY BRIGHTNESS (each key's own) as the same five squares, in place of its slider. **Status:** done in v18, with its
+    own measured steps (item 18).
 
 > (8.10.2026, ~08:35, on the Mac) if there are different steps between total keyboard brightness and each individual key brightness, adjust the new swatches to individual key. Test the key brightness resolution and adjust swatches to fit exactly so we don't lose any values
 
 18. Measure each key's own brightness (its colour scaled, 0x8081) with the camera and give KEY BRIGHTNESS squares
-    that fit its real steps, none lost. **Status:** started 8.10.2026
+    that fit its real steps, none lost. **Status:** done in v18: 0–44 dark, light from 45 (18 %), then smooth; squares
+    OFF 18 30 45 60 80 100 (LESSONS 20). ESC set to 30 and 100 from the squares, read back from settings.json.

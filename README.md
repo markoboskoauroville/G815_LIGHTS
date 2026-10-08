@@ -7,11 +7,18 @@ this one keyboard, nothing else.** Built 2.10.2026 because OpenRGB showed colour
 
 - The window draws the keyboard as it is (black keys, the legend lit in the key's colour, M1 M2 M3 MR yellow).
   Click or drag keys, set a colour (square, hue, RGB, hex, swatches) and a brightness for just those keys;
-  presets put a saved colour on a group in one press; the keyboard's own brightness has its slider too.
+  presets put a saved colour on a group in one press. Brightness is small squares, one per level the keys really
+  show (measured with the camera): the keyboard's OFF 12 25 50 100, a key's own OFF 18 30 45 60 80 100.
 - M1 M2 M3 are the keyboard's banks: choosing one in the window switches the keyboard, pressing one on the
   keyboard switches the window. Every change is kept on the Mac (`~/.g815/settings.json`) and, four seconds
   later, written into that bank of the keyboard, which holds one still colour per zone — so the power-on is
   still, never a light show — and the app paints every key the moment the Mac is up.
+- Macros (v15): kept on the Mac per bank, played by G1–G5 or any other key; MR on the keyboard records (MR, the key,
+  type, MR), and the window has an editor and a recorder.
+- G1–G5 are the app's (v18): they never type F1–F5, in any bank, with the app running or not. While the app runs the
+  keyboard is in host mode, as under G HUB: the app lights the active M key and switches banks when an M key is
+  pressed; quitting gives the keyboard its own mode back on the same bank. MR's own light cannot be set on this
+  keyboard (LESSONS 18); the drawing's MR shows it.
 - A login agent starts it without a window; the star's row (Keyboard and mouse › G815 Lights) opens the window.
 
 | Document | For |

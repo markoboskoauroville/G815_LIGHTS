@@ -195,7 +195,7 @@ untouched to the eye during the session (not checked key by key).
 
 ## T3 — what MR, G1 and M1–M3 really send; macros without MR (v17), 8.10.2026
 
-**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** open
+**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** passed; what it found is fixed in v18 (T4)
 
 v17: after a failure the keyboard is reopened at most once a second (T2's storm); the G/M/MR feature indexes are
 known before the G-key call (no stray repaint at start); `G1–G5 …` logged only when it changes. New:
@@ -379,3 +379,39 @@ RECHECK KEYBOARD:
 
 Colours (camera, after the recheck): right, as drawn (F1 red, F2 F3 1 green, the rest orange). Odd: in that shot no
 M light was lit (M1 had been lit green all session); the brightness key showed green.
+
+
+---
+
+## T4 — v18 written AND tested on the Mac, 8.10.2026
+
+**Branch:** `claude/upbeat-mendel-yhjx3q`, then main · **Status:** passed
+
+Marko, 8.10.2026: "please finish all pending jobs". This time the Claude Code on the Mac wrote the code (no cloud
+round), tested it on the keyboard with his hand for the physical keys (tests/ask.swift boxes) and the camera for the
+lights. What v18 is: G1–G5 held by the app in every bank, the keyboard in host mode while the app runs, the M keys and
+M lights through the app, G1–G5 set to nothing in every bank of the keyboard's memory, the keyboard given back on quit,
+the brightness as measured squares, the recording focus. LESSONS 16–20 have the measurements.
+
+| Step | Result | Evidence |
+|---|---|---|
+| Install v18 | PASS | `built build/g815 and build/G815 Lights.app (v18)` |
+| G1–G5 slots in the memory | PASS | sectors 1–3 at 0x20: `80 02 00 00` ×5, then `90 0d 00 01 02 03` (M keys untouched) |
+| G1 in M2 (no macro), app running | PASS | `G keys: 11 ff 0a 00 01 …` → `macros: G1 has no macro in M2`; screenshot: no Speechify |
+| MR in M2 (no macro anywhere) | PASS | `MR: 11 ff 0c 00 01 …` → waits; again → `MR: cancelled` |
+| G1 with the app stopped | PASS | nothing typed in TextEdit, no Speechify (the memory's "nothing") |
+| Host mode at start | PASS | `keyboard in host mode: the app drives M1–M3, G1–G5 and MR`, `paint all: host mode`; camera: M2 lit, keys in M2's colours |
+| M1 / M2 on the keyboard | PASS | `M keys: 11 ff 0b 00 01` → `M1 pressed on the keyboard` → `bank M1 chosen`; camera: M1 lit, F1 red, F2 F3 1 green |
+| G1 macro in M1, MR | PASS | `G keys: … 00 01` → `played MACRO 1`; MR waits / cancels |
+| Quit gives the keyboard back | PASS | `quit: the keyboard back in its own mode, on M1` (and `on M2` after M2 in the window); next start `keyboard on M2, mode 1` |
+| RECHECK in host mode | PASS | `The keyboard's onboard mode: 2`, `Host mode: the app drives the banks; … on M2`; camera: M2 lit after it (the T3 "no M light" is gone) |
+| LOCK | PASS | `locked to M1`, M3 → `M3 pressed on the keyboard, locked to M1: nothing changes`, `unlocked` |
+| ☼ on the keyboard in host mode | PASS | `keyboard says: 11 ff 0d 00 …`; the level stepped 12 → 0 (the key's own cycle); set back to 12 |
+| Keyboard brightness squares | PASS | square 100 → `brightness 100`, square 12 → `brightness 12` |
+| Key brightness squares | PASS | ESC: square 30 → `{'b': 30}`, square 100 → `{'b': 100}` in settings.json |
+| MR light | NOT POSSIBLE | 0x8030 fn 1 error 7 in both modes; 0x8020 bit 3 error 2; no free per-key index lights it (LESSONS 18) |
+
+Corrections to T3's notes: TAKE IT AWAY does show whenever the key has a macro (MacroViews line 72); the T3 crop was
+cut just under PUT … HERE. RECORD replacing a macro's steps is meant (its help says so). The recording focus is fixed:
+RECORD takes the focus from the step fields.
+Not watched: host mode across a night's sleep and a cold boot (the app takes the keyboard over at every open).

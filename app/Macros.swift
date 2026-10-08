@@ -7,8 +7,8 @@
 // Nothing goes into the keyboard's memory; the app is the one that plays them, from login on.
 //
 // Two ways in. G1–G5 and MR speak HID++ (features 0x8010 G-keys, 0x8030 MR; they arrive through Wire as the
-// keyboard's own news). G1–G5 are put under the app's control only in a bank that gives one of them a macro, so
-// elsewhere they do what they always did. Every other key is caught by macOS's event tap, which needs Accessibility
+// keyboard's own news). v18: G1–G5 are under the app's control in every bank (Store.syncGKeys), so they never type
+// F1–F5 and MR is always heard; a G key with no macro does nothing. Every other key is caught by macOS's event tap, which needs Accessibility
 // (System Settings › Privacy & Security › Accessibility); playing a macro needs the same permission. The trigger key
 // itself is swallowed, so it types nothing. Modifiers (CTRL SHIFT ALT ⌘), the media keys and ☼ cannot be triggers.
 //
@@ -268,6 +268,8 @@ final class Macros: ObservableObject {
     /// the editor's RECORD: into the macro chosen there, until STOP (or MR)
     func recordInto(_ uid: String) {
         guard rec == .idle else { return }
+        // T3: the step's text field kept the focus, so what was recorded was typed into it as well
+        NSApp.keyWindow?.makeFirstResponder(nil)
         into = uid; steps = []; lastAt = 0
         rec = .recording(nil); mrLight(true)
         say("recording: type the macro, then STOP")
@@ -391,11 +393,9 @@ final class Macros: ObservableObject {
     // ------------------------------------------------------------ the rest
     private func say(_ t: String) { last = t; Store.log("macros: " + t) }
 
-    /// MR's own light: on while waiting for the key and while recording
-    private func mrLight(_ on: Bool) {
-        store.wire.run { kb in
-            guard let i = (try? kb.index(of: 0x8030)) ?? nil else { return }
-            _ = try? kb.call(i, 1, [on ? 1 : 0])
-        }
-    }
+    /// MR's own light. MEASURED 8.10.2026 (T3 and after): this G815 has no way to set it. 0x8030 function 1 answers
+    /// HID++ error 7 (no such function) in onboard and host mode, 0x8020 refuses a fourth bit (error 2), and none of
+    /// the free per-key indexes (2e 61 63–67) lights it. So the window shows it: MR on the drawing turns red while
+    /// waiting and recording (Views.swift); the keyboard's MR stays dark.
+    private func mrLight(_ on: Bool) {}
 }

@@ -251,6 +251,7 @@ final class Store: ObservableObject {
                 macros.mr(m[4] & 1 != 0)
             } else if !quiet {
                 Store.log("M keys: " + hex(m))
+                if let i = [1: 1, 2: 2, 4: 3][Int(m[4])] { mPressed(i) }
             }
             return
         }
@@ -258,14 +259,22 @@ final class Store: ObservableObject {
         repaintSoon("keyboard spoke")
     }
 
-    /// G1–G5 are the app's (0x8010 software control on) only in a bank that gives one of them a macro, or while MR
-    /// waits for a key; everywhere else they do what the keyboard makes them do. Told to the keyboard only when that
-    /// changes, or with force: at start, when the keyboard is (re)opened, after a bank switch (T1: each call makes the
-    /// keyboard answer with three notes, so it is never sent again and again).
+    /// v18, HOST MODE while the app runs, the way G HUB drives the keyboard (Marko, 8.10.2026: "when I press G1 my
+    /// Speechify is popping up ... Please detach G's with functions"). MEASURED 8.10.2026:
+    /// - with 0x8010 software control off, the keyboard's bank makes G1–G5 type F1–F5 (M2: 1–5) and MR says nothing;
+    ///   with it on, G1–G5 and MR send only HID++ notes (G1 0a 00 01, MR 0c 00 01);
+    /// - but with it on, in onboard mode (1) the keyboard puts its M lights out and ignores 0x8020 (set M lights);
+    /// - in host mode (2) 0x8020 lights the M key asked for, and an M key sends only its note (0b 00 02 for M2):
+    ///   the keyboard no longer switches or reloads a bank by itself; the app switches (heard → mPressed).
+    /// So, every time it is told (start, a reopen or replug, a bank chosen, RECHECK): host mode, G1–G5 and MR to the
+    /// app, the active bank's M key lit. A G key with no macro does nothing. The banks in the keyboard's memory say
+    /// "nothing" for G1–G5 too (onboard.swift), and the keyboard is given back its own mode when the app quits
+    /// (release), so G1 never types F1 at any time. The calls are sent only with force or when not yet done (T1:
+    /// each 0x8010 call makes the keyboard answer with three notes, so it is never sent again and again).
     func syncGKeys(force: Bool = false) {
-        let want = KeyCodes.gKeys.contains { bank.macros[$0] != nil } || macros.rec != .idle
-        guard force || gSoft != want || gIdx == nil else { return }
+        guard force || gSoft != true || gIdx == nil else { return }
         gSoft = nil
+        let bankNow = s.active
         wire.run { [weak self] kb in
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
             let mk = (try? kb.index(of: 0x8020)) ?? nil
@@ -277,14 +286,50 @@ final class Store: ObservableObject {
                 }
                 self.mIdx = mk; self.gIdx = g; self.mrIdx = r
             }
+            var toHost = false
+            if (try? kb.onboardMode()) != 2 { try kb.setOnboardMode(2); toHost = true }
             var done = false
-            if let g { done = (try? kb.call(g, 2, [want ? 1 : 0])) != nil }
+            if let g { done = (try? kb.call(g, 2, [1])) != nil }
+            if let mk { _ = try? kb.call(mk, 1, [UInt8(1 << (bankNow - 1))]) }
             DispatchQueue.main.async {
-                guard let self, done else { return }
-                self.gSoft = want
-                if self.gLogged != want { self.gLogged = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
+                guard let self else { return }
+                // host mode starts with every key dark: paint them at once
+                if toHost { Store.log("keyboard in host mode: the app drives M1–M3, G1–G5 and MR"); self.paintAll("host mode") }
+                guard done else { return }
+                self.gSoft = true
+                if self.gLogged != true { self.gLogged = true; Store.log("macros: G1–G5 under the app") }
             }
         }
+    }
+
+    /// An M key on the keyboard (host mode: only its note comes, the keyboard does not switch by itself).
+    func mPressed(_ i: Int) {
+        if i == s.active { syncGKeys(force: true); return }
+        if s.locked {
+            Store.log("M\(i) pressed on the keyboard, locked to M\(s.active): nothing changes")
+            syncGKeys(force: true)                   // its light back on the locked bank
+            return
+        }
+        cameFrom = s.active
+        Store.log("M\(i) pressed on the keyboard")
+        choose(i)
+    }
+
+    /// The app quits: the keyboard gets its own mode back (its bank, its M keys, its M lights), G1–G5 still nothing.
+    /// Waits up to a second for the wire, so a quit or a launchctl stop does not leave it in host mode.
+    /// The bank too: in host mode the keyboard ignores "switch your bank" (MEASURED 8.10.2026: back in its own mode it
+    /// was on M2 while the app was on M1), so it is told again after the mode, and keeps it for the next power-on.
+    nonisolated func release() {
+        let done = DispatchSemaphore(value: 0)
+        let bank = MainActor.assumeIsolated { s.active }
+        wire.run { kb in
+            if let g = try? kb.index(of: 0x8010) { _ = try? kb.call(g, 2, [0]) }
+            try? kb.setOnboardMode(1)
+            if let ob = try? kb.need(0x8100) { _ = try? kb.call(ob, 3, [0, UInt8(bank)]) }
+            Store.log("quit: the keyboard back in its own mode, on M\(bank)")
+            done.signal()
+        }
+        _ = done.wait(timeout: .now() + 1)
     }
 
     private var repaintTimer: Timer?
@@ -305,8 +350,9 @@ final class Store: ObservableObject {
             let ob = try kb.need(0x8100)
             let now = Int(try kb.call(ob, 4)[1])
             Store.log("keyboard on M\(now), mode \(try kb.onboardMode())")
+            // v18: still in host mode (an app that did not quit cleanly) the keyboard says bank 0; set it all the same
             if now != want {
-                try kb.call(ob, 3, [0, UInt8(want)])
+                _ = try? kb.call(ob, 3, [0, UInt8(want)])
                 Thread.sleep(forTimeInterval: 0.5)
             }
             DispatchQueue.main.async { self?.chosenAt = Date() }
@@ -372,14 +418,26 @@ final class Store: ObservableObject {
         chosenAt = Date()
         save()
         wire.run { kb in
-            try kb.call(try kb.need(0x8100), 3, [0, UInt8(i)])
+            // the keyboard's own current bank, for its power-on; refused in host mode on some firmware, so not fatal
+            _ = try? kb.call(try kb.need(0x8100), 3, [0, UInt8(i)])
             Thread.sleep(forTimeInterval: 0.3)       // the keyboard reloads the bank; paint after, not before
         }
         paintAll("bank M\(i) chosen")
-        syncGKeys(force: true)                     // a bank reload may give G1–G5 back to the keyboard
+        syncGKeys(force: true)                     // host mode again, G1–G5 to the app, M\(i)'s light
     }
 
     // ------------------------------------------------------------ the keyboard's own state
+    /// The keyboard's brightness as the keys show it. MEASURED 8.10.2026 with the camera, 0x8040 set to every value
+    /// 0–100: 0–11 off, 12–24 one level, 25–49 the next, 50–99 the next, 100 the brightest. Five levels (the keyboard's
+    /// own getInfo says 100 max, 5 steps): the window offers exactly these, one square each.
+    static let brightSteps = [0, 12, 25, 50, 100]
+    /// A key's own brightness scales its colour (KeyLight.sent). MEASURED 8.10.2026 with the camera, every key grey
+    /// 0–255 at keyboard brightness 100: 0–44 shows nothing (as 0), light starts at 45 (18 %), small stairs to 64,
+    /// then smooth to 255 with no plateau. So its squares start at the first value that lights and spread evenly above
+    /// it; none sits in the dead zone. (A colour's weaker channels die first: orange's blue goes out below ~50 %.)
+    static let keySteps = [0, 18, 30, 45, 60, 80, 100]
+    static func level(_ v: Int, _ steps: [Int] = brightSteps) -> Int { steps.lastIndex { $0 <= v } ?? 0 }
+
     func setBrightness(_ v: Int) {
         brightness = v
         wire.run { kb in try kb.setBrightness(max(0, min(100, v))) }
@@ -500,7 +558,10 @@ final class Store: ObservableObject {
                 let what = set == 0 ? "no keys of its own (all one colour)" : "\(set) keys of its own"
                 add(true, said.contains("already") ? "M\(i): memory already right; on the Mac \(what)" : "M\(i): memory was different, written again; on the Mac \(what)")
             }
-            if now != want {
+            if mode == 2 {
+                // v18 host mode: the keyboard does not keep a bank of its own (it says 0); the app's is the one
+                add(true, "Host mode: the app drives the banks; the keyboard and the app are on M\(want)")
+            } else if now != want {
                 if locked {
                     try kb.call(ob, 3, [0, UInt8(want)]); Thread.sleep(forTimeInterval: 0.4)
                     add(true, "The keyboard was on M\(now), the app on M\(want) (locked): the keyboard is back on M\(want)")
@@ -512,7 +573,7 @@ final class Store: ObservableObject {
             }
             DispatchQueue.main.async {
                 guard let self else { return }
-                if now != want && !locked { self.cameFrom = want; self.s.active = now; self.save() }
+                if mode != 2 && (1...3).contains(now) && now != want && !locked { self.cameFrom = want; self.s.active = now; self.save() }
                 self.report.append(contentsOf: lines)
                 self.paintAll("recheck")
                 self.paintAfterSwitch("recheck")

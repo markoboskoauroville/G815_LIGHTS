@@ -15,6 +15,9 @@
   it on the real keyboard, writes the results under the task, commits and pushes. MANIFEST.md's "Now" block is what
   starts it on the Mac; he brings back "Test results are in TESTS.md". Read the results before the next change, and
   mark the task's Status (open / passed / failed: what next).
+- **When Marko asks the Mac to finish the work** (8.10.2026: "please finish all pending jobs"), the Claude Code on his
+  Mac writes the code too, tests it on the keyboard, and writes its results as a T task in `TESTS.md` like any other,
+  so the cloud reads where things stand before its next change.
 - **VERSION** in `app/Views.swift` goes up with every change he will see; the app updates itself from main when it
   is higher (`app/Update.swift`), so work reaches his Mac only through main.
 - **No Swift here?** The cloud has no swiftc: push, and read the GitHub build (`.github/workflows/build.yml`).

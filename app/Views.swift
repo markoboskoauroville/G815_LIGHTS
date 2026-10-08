@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 17
+let VERSION = 18
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
@@ -220,6 +220,33 @@ struct Word: View {
     }
 }
 
+/// Small squares, one per brightness level the keys really show (MEASURED 8.10.2026): the keyboard's OFF 12 25 50 100
+/// (Store.brightSteps), a key's own OFF 18 30 45 60 80 100 (Store.keySteps). The one in force is outlined; a click picks it (Marko, 8.10.2026: "make small squares swatches
+/// so user can jump directly to brightness level").
+struct LevelSquares: View {
+    let value: Int
+    var steps = Store.brightSteps
+    let pick: (Int) -> Void
+    var body: some View {
+        let level = Store.level(value, steps)
+        HStack(spacing: 8) {
+            ForEach(0..<steps.count, id: \.self) { i in
+                let v = steps[i]
+                VStack(spacing: 3) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.amber.opacity(i == 0 ? 0.06 : 0.2 + 0.8 * Double(v) / 100))
+                        .frame(width: 26, height: 26)
+                        .overlay(RoundedRectangle(cornerRadius: 3).stroke(i == level ? Color.sand : Color.dead, lineWidth: i == level ? 2 : 1))
+                    Text(i == 0 ? "OFF" : "\(v)").font(mono(10, .regular)).foregroundColor(i == level ? .sand : .dimSand)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { pick(v) }
+                .help(i == 0 ? "off" : "brightness \(v)%")
+            }
+        }
+    }
+}
+
 struct NumField: View {
     let label: String
     @Binding var value: Int
@@ -248,8 +275,6 @@ struct MainView: View {
     @State private var hsv = HSV(h: 0, s: 0, v: 1)
     @State private var keyB = 100
     @State private var keyBd = 100.0
-    @State private var brightD = 0.0
-    @State private var draggingBright = false
     @State private var renaming: String?
     @State private var renameText = ""
     @State private var renameAuto = false
@@ -400,11 +425,9 @@ struct MainView: View {
                         }
                     }
                     label("KEY BRIGHTNESS").padding(.top, 6)
-                    HStack {
-                        Slider(value: $keyBd, in: 0...100, onEditingChanged: { editing in if !editing { keyB = Int(keyBd); push() } })
-                            .onChange(of: keyBd) { _, v in keyB = Int(v); push(false) }
-                        Text("\(keyB)%").font(mono(15)).foregroundColor(.sand).frame(width: 56, alignment: .trailing)
-                    }.frame(width: 300)
+                    // v18: the same five squares as the keyboard's (Marko, 8.10.2026: "I want to control for each individual
+                    // key brightness with the same swatches ... replacing the key brightness slider")
+                    LevelSquares(value: keyB, steps: Store.keySteps) { keyB = $0; keyBd = Double($0); push() }
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     label("PRESETS")
@@ -440,13 +463,8 @@ struct MainView: View {
                     .coordinateSpace(name: "presets")
                     .onPreferenceChange(ChipFrames.self) { chipFrames = $0 }
                     label("KEYBOARD BRIGHTNESS").padding(.top, 10)
-                    HStack {
-                        Slider(value: $brightD, in: 0...100, onEditingChanged: { e in
-                            draggingBright = e
-                            if !e { store.setBrightness(Int(brightD)) }
-                        })
-                        Text("\(Int(brightD))%").font(mono(15)).foregroundColor(.sand).frame(width: 56, alignment: .trailing)
-                    }
+                    // v18: one small square per level the keys really show; a click jumps to it (LevelSquares)
+                    LevelSquares(value: store.brightness) { store.setBrightness($0) }
                 }
             }
             }
@@ -480,8 +498,6 @@ struct MainView: View {
         .padding(20)
         .background(Color.ground)
         .preferredColorScheme(.dark)
-        .onAppear { brightD = Double(store.brightness) }
-        .onChange(of: store.brightness) { _, v in if !draggingBright { brightD = Double(v) } }
         .onChange(of: store.s.active) { _, _ in pickFromSelection() }
     }
 }

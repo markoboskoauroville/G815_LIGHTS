@@ -97,3 +97,41 @@ from these three features.
 
 build/g815 was committed before build/ went into .gitignore, so every install changed a tracked file: a pull refused,
 and the updater (which needs a clean main) would never have updated. Untracked in v16.
+
+## 16. G1–G5 type F1–F5 unless the app holds them; MR speaks only then (T3, 8.10.2026)
+
+Each bank in the keyboard's memory binds G1–G5 at 0x20 (four bytes each): `80 02 00 3a`…`3e` in M1 (HID keyboard,
+F1–F5), `1e`…`22` in M2 (1–5); then M1–M3 as `90 0d 00 01`…`03`. With 0x8010 software control off, G1 typed F1 (it
+opened Speechify, his F1 key) and MR sent nothing at all. With it on (fn 2, `01`) G1–G5 send only `11 ff 0a 00 <mask>`
+and MR `11 ff 0c 00 01`/`00`. v18 holds them always and writes `80 02 00 00` (a key with no usage: nothing) into
+G1–G5 of every bank, so they type nothing even with the app stopped.
+
+## 17. Holding the G keys puts the M lights out; host mode gives them back (8.10.2026)
+
+In onboard mode (1) with 0x8010 software control on, the keyboard switches its M1–M3 lights off and ignores 0x8020
+fn 1 (it answers, nothing lights). In host mode (2), 0x8020 fn 1 lights the M key asked for (bit 0 M1, 1 M2, 2 M3; bit
+3 is error 2), and an M key sends only `11 ff 0b 00 0N`: the keyboard no longer switches or reloads a bank by itself,
+the app switches. In host mode the keyboard's own current bank reads 0 and 0x8100 fn 3 is not obeyed, so the app
+tells the bank again after going back to mode 1 when it quits. Host mode also starts with every key dark: paint at
+once. The ☼ key still works (it sends `11 ff 0d 00…`); one press from 12% goes to 0.
+
+## 18. MR's light cannot be set on this G815 (8.10.2026)
+
+0x8030 has only function 0 (it answers count 0); function 1 is HID++ error 7 (no such function) in both modes.
+0x8020 refuses a fourth bit, and of the free per-key indexes only 2e 61 63–67 are accepted, none of them MR. The window
+shows MR's state instead.
+
+## 19. A test that needs his hand: a box that goes when the key comes (8.10.2026)
+
+Voice cues alone were too slow (presses fell outside the probe's window), and "any key closes it" failed because he
+keeps working. `tests/ask.swift` shows the key on the big screen and closes only when the probe's output or
+`~/.g815/log.txt` shows that key's own line (`--keys none --watch … --match …`), or when he clicks it; `tests/press.sh`
+runs the probe with it and takes a camera shot after. The voice says only the key's name.
+
+## 20. Brightness has steps: five for the keyboard, a dead zone for a key (8.10.2026)
+
+Measured with the camera. The keyboard's own brightness (0x8040; getInfo says max 100, 5 steps): 0–11 off, 12–24,
+25–49, 50–99 and 100 are the only levels the keys show; the window offers exactly 0 12 25 50 100. A key's own colour
+(0x8081): 0–44 is as dark as 0 even at keyboard brightness 100, light starts at 45 (18 %), small stairs to 64, then
+smooth to 255. So a key's brightness squares start at 18 %, and a weak channel of a colour (orange's blue) goes out
+before the others when a key is dimmed.

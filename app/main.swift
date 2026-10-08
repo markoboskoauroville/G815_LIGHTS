@@ -77,6 +77,9 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    // v18: the keyboard back in its own mode when the app goes (⌘Q, the updater's restart, launchctl's SIGTERM)
+    func applicationWillTerminate(_ n: Notification) { store?.release() }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool { show(); return true }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
@@ -124,6 +127,11 @@ func makeMenu() -> NSMenu {
 
 let app = NSApplication.shared
 let delegate = Delegate()
+// launchctl stops the login agent with SIGTERM, which ends a process without applicationWillTerminate
+signal(SIGTERM, SIG_IGN)
+let sigterm = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+sigterm.setEventHandler { delegate.store?.release(); exit(0) }
+sigterm.resume()
 app.delegate = delegate
 app.mainMenu = makeMenu()
 app.run()
