@@ -1,12 +1,17 @@
 # build.yml: GitHub compiles the app and build/g815 on a Mac at every push, with build.sh as on Marko's Mac.
 # Signed ad hoc (SIGN=-): the "Mantra Apps" certificate lives only in his login keychain. The app it makes is for
 # checking the build; for his keyboard he still runs ./install.sh, so Input Monitoring stays with his signer.
+# A push to main also publishes the release v<VERSION> (VERSION in app/Views.swift), the one the version number
+# top right in the app opens (releases/latest); the same VERSION pushed again replaces that release's files.
 name: build
 
 on:
   push:
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -25,3 +30,15 @@ jobs:
           path: |
             build/G815-Lights.zip
             build/g815
+      - name: Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(sed -n 's/^let VERSION = \([0-9]*\)/\1/p' app/Views.swift)
+          if gh release view "v$V" >/dev/null 2>&1; then
+            gh release upload "v$V" build/G815-Lights.zip build/g815 --clobber
+          else
+            gh release create "v$V" build/G815-Lights.zip build/g815 --target "$GITHUB_SHA" --title "G815 Lights v$V" \
+              --notes "Built by GitHub from $GITHUB_SHA, signed ad hoc. Unzip, then run it; for the keyboard at login use ./install.sh from the repo."
+          fi

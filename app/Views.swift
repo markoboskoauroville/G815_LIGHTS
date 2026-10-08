@@ -7,7 +7,10 @@
 
 import SwiftUI
 
-let VERSION = 12
+let VERSION = 13
+/// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
+/// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
+let LATEST = URL(string: "https://github.com/markoboskoauroville/G815_LIGHTS/releases/latest")!
 
 extension Color {
     init(hex: String) {
@@ -297,7 +300,8 @@ struct MainView: View {
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
                 Spacer()
                 Word(text: store.checking ? "CHECKING…" : "RECHECK KEYBOARD", state: .amber) { store.recheck() }
-                Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand)
+                Link(destination: LATEST) { Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand) }
+                    .buttonStyle(.plain).focusable(false).help("download the latest version from GitHub")
             }
 
             HStack(spacing: 4) {

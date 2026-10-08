@@ -125,4 +125,4 @@ painted yellow on screen; "Saving Not Supported".
 
 > (8.10.2026) Please in the app make the version number which is in the upper right corner clickable so it takes me to GitHub to download the latest version.
 
-6. The version number top right is a link to GitHub, to download the latest version. **Status:** open
+6. The version number top right is a link to GitHub, to download the latest version. **Status:** done in code, v13: the version number opens github.com/markoboskoauroville/G815_LIGHTS/releases/latest; the workflow now publishes the release v<VERSION> (zipped app + g815) on every push to main. Until this branch is merged into main there is no release yet, so the page is empty.
