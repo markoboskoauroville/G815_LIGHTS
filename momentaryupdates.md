@@ -30,7 +30,7 @@ painted yellow on screen; "Saving Not Supported".
 
 9. Look at the keyboard through a SCREEN capture of the small window showing his NDI camera (not a Mac camera). — **Status:** started
 10. The NDI camera's white balance is a bit off: use the keyboard's pure LED colours to calibrate it, and fix
-    the camera (MANTRA_NDI). — **Status:** open; also written into MANTRA_NDI/momentaryupdates.md
+    the camera (MANTRA_NDI). — **Status:** done in MANTRA_NDI (2.10.2026, v100–v106: the TRIANGLE white balance, true colours against the G815; HANDOVER)
 
 ## 2.10.2026, 03:05 — memory buttons on the map, one bank each, saved in the Mac and in the keyboard
 
