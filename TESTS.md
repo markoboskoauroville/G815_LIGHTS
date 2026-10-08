@@ -31,7 +31,7 @@ Marko carries one line each way:
 
 ## T1 — macros (v15), 8.10.2026
 
-**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** open
+**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** failed at step 1: a repaint loop every 0.77 s (every 0x8010 call makes the keyboard send three empty notes on 0x0a 0x0b 0x0c; the M-keys note repainted, the repaint called 0x8010 again). Fixed in v16; steps 2–10 go on in T2.
 
 What v15 does: macros kept in `~/.g815/settings.json`, per bank. G1–G5 and MR speak HID++ (features 0x8010 and
 0x8030); any other key is caught through an event tap that needs Accessibility, which also plays macros. MR on the
@@ -105,3 +105,33 @@ and it is a flicker risk for step 10.
 allowed` or `macros: key tap on` in the log by 04:31.
 
 **3–10 — NOT RUN.**
+
+---
+
+## T2 — macros again, after the loop fix (v16), 8.10.2026
+
+**Branch:** `claude/upbeat-mendel-yhjx3q` · **Status:** open
+
+v16: the G-key mode (0x8010) is sent only when it changes, at start, after a reopen and after a bank switch; the
+notes from the G, M and MR features (0x0a 0x0b 0x0c on this keyboard) never repaint, and empty ones are not logged.
+`build/g815` and `build/list` are no longer tracked by git (an install changed them, which blocked pulls and made the
+updater think the repo was not clean).
+
+0. **Before pulling:** `git checkout -- build/g815 build/list` (the old tracked binaries; the pull removes them from
+   git, the install builds g815 again). Then the pull, `./install.sh`: expect `(v16)`.
+1. **No loop.** Wait 60 s without touching anything, then
+   `grep -c "paint all: keyboard spoke" ~/.g815/log.txt` twice, 60 s apart: the number must not grow (0 or 1 new is
+   fine). Quote the last 30 log lines. `git status --short` must not list build/g815.
+2. **Accessibility** (Marko's act — ask him, and wait): open the window, click MR in the drawing; System Settings
+   opens at Accessibility; switch **G815 Lights** on. Log within 3 s: `macros: Accessibility allowed`,
+   `macros: key tap on`. If G815 Lights is not in the list, he adds it with + from `~/Developer/G815_LIGHTS/build`.
+3. – 10. **As in T1, steps 3 to 10** (G1 and MR on the wire; record on the keyboard with MR → G1 → `abc` → MR;
+   F5 as trigger; the editor; banks; after a restart; RECHECK; colours unchanged). For step 3, with no G-key macro yet,
+   G1 shows nothing; press MR first (its light should come on and the log say `G1–G5 under the app`), then G1, and
+   quote the `G keys:` and `MR:` lines with their bytes.
+11. **Updater check.** `git -C ~/Developer/G815_LIGHTS status --porcelain` after the install: empty (apart from
+    TESTS.md while you write it).
+
+### Results
+
+(the Mac's Claude Code writes here)

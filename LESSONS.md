@@ -85,3 +85,15 @@ An app downloaded from GitHub is signed ad hoc and would lose Input Monitoring a
 updater pulls main into the repo the app sits in and runs ./build.sh, signed "Mantra Apps", then restarts through
 `launchctl kickstart -k` (the login agent has no KeepAlive; launchd kills the job's process group when its app
 quits, so a child left to "restart later" would die with it).
+
+## 14. Every 0x8010 call answers with three empty notes (T1, 8.10.2026)
+
+Setting G-key software control (0x8010 fn 2, on or off) makes the keyboard send `11 ff 0a 00…`, `11 ff 0b 00…`,
+`11 ff 0c 00…` (G keys, M keys, MR on this firmware). v15 repainted on the M-keys note and called 0x8010 with every
+repaint: a loop every 0.77 s, 1,062 repaints in 18 minutes. Send it only when the mode changes; never repaint on news
+from these three features.
+
+## 15. Nothing an install writes may be tracked by git (8.10.2026)
+
+build/g815 was committed before build/ went into .gitignore, so every install changed a tracked file: a pull refused,
+and the updater (which needs a clean main) would never have updated. Untracked in v16.

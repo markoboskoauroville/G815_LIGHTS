@@ -161,6 +161,8 @@ final class Store: ObservableObject {
     /// where G1–G5 (0x8010) and MR (0x8030) speak from on this firmware, and whether G1–G5 are the app's now
     private var gIdx: UInt8?
     private var mrIdx: UInt8?
+    /// the M keys' feature (0x8020): its news is ignored, the bank switch is read by poll()
+    private var mIdx: UInt8?
     private var gSoft: Bool?
     private var dirty = Set<String>()
     private var paintQueued = false
@@ -182,7 +184,7 @@ final class Store: ObservableObject {
         // a keyboard (re)opened has lost nothing we know of, but its RAM may have been reset while we were away
         wire.onOpen = { [weak self] in
             Store.log("keyboard opened")
-            DispatchQueue.main.async { self?.paintAll("opened") }
+            DispatchQueue.main.async { self?.paintAll("opened"); self?.syncGKeys(force: true) }
         }
         // The keyboard's own news (MEASURED 3.10.2026: after a real boot the bank's per-key colours were lost
         // while a replayed login painted them in 4 s, so something reloads the keyboard after the app's paint).
@@ -228,7 +230,6 @@ final class Store: ObservableObject {
     func paintAll(_ why: String = "") {
         if !why.isEmpty { Store.log("paint all: " + why) }
         paint(layout.keys.map(\.id))
-        syncGKeys()
     }
 
     // ------------------------------------------------------------ G1–G5 and MR (macros)
@@ -236,27 +237,38 @@ final class Store: ObservableObject {
     /// (MEASURED 3.10.2026: after a real boot the bank's per-key colours were lost while a replayed login painted
     /// them in 4 s, so something reloads the keyboard after the app's paint).
     func heard(_ m: [UInt8]) {
-        if m.count >= 6, m[3] >> 4 == 0 {
-            if let g = gIdx, m[2] == g {
-                Store.log("G keys: " + hex(m))
-                macros.gKeys(Int(m[4]) | Int(m[5]) << 8); return
+        // T1 (8.10.2026, on his Mac): every 0x8010 call makes the keyboard send three empty notes, on the G, M and MR
+        // features. Taken as "keyboard spoke" they repainted, the repaint called 0x8010 again: a loop every 0.77 s.
+        // So news from these three never repaints, and an all-zero note is not even logged.
+        if m.count >= 6, m[3] >> 4 == 0, [gIdx, mrIdx, mIdx].contains(m[2]) {
+            let quiet = m[4...].allSatisfy { $0 == 0 }
+            if m[2] == gIdx {
+                if !quiet { Store.log("G keys: " + hex(m)) }
+                macros.gKeys(Int(m[4]) | Int(m[5]) << 8)
+            } else if m[2] == mrIdx {
+                if !quiet { Store.log("MR: " + hex(m)) }
+                macros.mr(m[4] & 1 != 0)
+            } else if !quiet {
+                Store.log("M keys: " + hex(m))
             }
-            if let r = mrIdx, m[2] == r {
-                Store.log("MR: " + hex(m))
-                macros.mr(m[4] & 1 != 0); return
-            }
+            return
         }
         Store.log("keyboard says: " + hex(m))
         repaintSoon("keyboard spoke")
     }
 
     /// G1–G5 are the app's (0x8010 software control on) only in a bank that gives one of them a macro, or while MR
-    /// waits for a key; everywhere else they do what the keyboard makes them do. Called with every paintAll, so a
-    /// replug, a wake or an M key puts it right again.
-    func syncGKeys() {
+    /// waits for a key; everywhere else they do what the keyboard makes them do. Told to the keyboard only when that
+    /// changes, or with force: at start, when the keyboard is (re)opened, after a bank switch (T1: each call makes the
+    /// keyboard answer with three notes, so it is never sent again and again).
+    func syncGKeys(force: Bool = false) {
         let want = KeyCodes.gKeys.contains { bank.macros[$0] != nil } || macros.rec != .idle
+        guard force || gSoft != want || gIdx == nil else { return }
+        gSoft = nil
         wire.run { [weak self] kb in
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
+            let mk = (try? kb.index(of: 0x8020)) ?? nil
+            DispatchQueue.main.async { self?.mIdx = mk }
             var done = false
             if let g { done = (try? kb.call(g, 2, [want ? 1 : 0])) != nil }
             DispatchQueue.main.async {
@@ -265,7 +277,7 @@ final class Store: ObservableObject {
                     Store.log("macros: G keys feature " + (g.map { String(format: "0x%02x", $0) } ?? "none") + ", MR feature " + (r.map { String(format: "0x%02x", $0) } ?? "none"))
                 }
                 self.gIdx = g; self.mrIdx = r
-                if done && self.gSoft != want { self.gSoft = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
+                if done { self.gSoft = want; Store.log("macros: G1–G5 " + (want ? "under the app" : "left to the keyboard")) }
             }
         }
     }
@@ -295,6 +307,7 @@ final class Store: ObservableObject {
             DispatchQueue.main.async { self?.chosenAt = Date() }
         }
         paintAll("start")
+        syncGKeys(force: true)
         for t in [3.0, 10, 30, 60, 120] {
             DispatchQueue.main.asyncAfter(deadline: .now() + t) { [weak self] in self?.paintAll("start + \(Int(t)) s") }
         }
@@ -358,6 +371,7 @@ final class Store: ObservableObject {
             Thread.sleep(forTimeInterval: 0.3)       // the keyboard reloads the bank; paint after, not before
         }
         paintAll("bank M\(i) chosen")
+        syncGKeys(force: true)                     // a bank reload may give G1–G5 back to the keyboard
     }
 
     // ------------------------------------------------------------ the keyboard's own state
@@ -411,6 +425,7 @@ final class Store: ObservableObject {
     /// The keyboard reloads its bank from memory a moment after an M key, sometimes later than the first paint
     /// (his word, 6.10.2026: "it comes back sometimes, but not always"); so paint again at 1.5, 3 and 6 s.
     func paintAfterSwitch(_ why: String) {
+        syncGKeys(force: true)
         for t in [1.5, 3.0, 6.0] {
             DispatchQueue.main.asyncAfter(deadline: .now() + t) { [weak self] in self?.paintAll("\(why) + \(t) s") }
         }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 15
+let VERSION = 16
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
