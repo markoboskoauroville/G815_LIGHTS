@@ -118,3 +118,7 @@ painted yellow on screen; "Saving Not Supported".
 > To selection modes we need to add mode single. That means I can select only one key at the time for modifications.
 
 4. SINGLE selection mode: only one key chosen at a time. **Status:** done in code, v12: SINGLE in the KEYS row (green when on, off again with a second click; LASSO and SINGLE take turns, neither on = drag across keys as before). A click chooses that key alone and its colour comes into the picker; a drag moves the choice from key to key; ALL and SAME COLOUR are grey and do nothing while it is on; turning it on with many keys chosen clears the choice. Written in a cloud session with no Swift compiler: not yet built, installed or tried on his Mac (run ./install.sh).
+
+> (8.10.2026) Can you please add to this repro a Swift workflow so the app compiles in the GitHub?
+
+5. A GitHub workflow that compiles the app. **Status:** done: `.github/workflows/build.yml` runs `SIGN=- ./build.sh` on a macos-15 runner at every push and pull request (and by hand), and keeps the zipped app and build/g815 as a download. `build.sh` signs with "Mantra Apps" unless SIGN says otherwise, so his own builds are unchanged.

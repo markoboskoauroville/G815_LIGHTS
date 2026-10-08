@@ -11,6 +11,8 @@ only (no Xcode project).
 2. **Build and install:** `./install.sh` builds `build/G815 Lights.app` and `build/g815`, writes
    `~/Library/LaunchAgents/community.auroville.g815lights.plist` (the app with `--background`, RunAtLoad) and
    starts it. Run it again after any change.
+   GitHub builds the same with `SIGN=- ./build.sh` (`.github/workflows/build.yml`, ad hoc signature, on every
+   push): a red build there means the Swift does not compile.
 3. **Input Monitoring** (System Settings › Privacy & Security › Input Monitoring): **G815 Lights** on. The
    light interface shares the keyboard's USB interface, so opening it needs this; without it the window says
    `could not open the G815 (0xe00002e2)`. Granting it is Marko's own act.

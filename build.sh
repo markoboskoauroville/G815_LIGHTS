@@ -31,5 +31,6 @@ PL
 # signed with "Mantra Apps", the self-signed certificate in the login keychain (2.10.2026): macOS ties a
 # permission (Input Monitoring) to the signer, not to one build, so it survives every rebuild. An ad hoc
 # signature is pinned to its hash and lost its permission at the first rebuild (LESSONS.md).
-codesign --force -s "Mantra Apps" "$APP"
+# SIGN overrides the signer: GitHub's build (.github/workflows/build.yml) has no such certificate and signs ad hoc (-).
+codesign --force -s "${SIGN:-Mantra Apps}" "$APP"
 echo "built build/g815 and $APP (v$V)"

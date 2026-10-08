@@ -1,0 +1,27 @@
+# build.yml: GitHub compiles the app and build/g815 on a Mac at every push, with build.sh as on Marko's Mac.
+# Signed ad hoc (SIGN=-): the "Mantra Apps" certificate lives only in his login keychain. The app it makes is for
+# checking the build; for his keyboard he still runs ./install.sh, so Input Monitoring stays with his signer.
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swiftc --version
+      - name: Build
+        run: SIGN=- ./build.sh
+      - name: Pack the app
+        run: cd build && ditto -c -k --keepParent "G815 Lights.app" "G815-Lights.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G815-Lights
+          path: |
+            build/G815-Lights.zip
+            build/g815
