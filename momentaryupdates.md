@@ -160,3 +160,8 @@ painted yellow on screen; "Saving Not Supported".
 14. Done on the Mac this time (the Claude Code on his Mac writes the code and tests it on the keyboard), on the branch,
     then merged into main: item 13 (G keys detached), the MR light, the window notes from T3, the merge, the updater
     test (item 9), the old statuses tidied. **Status:** started 8.10.2026
+
+> (8.10.2026, ~08:15, on the Mac) now you need to work on the brightness slider. Actually, there is no more slider, only plus and minus. And you need to test with the camera the triggering point of the brightness because it's not continuous, it jumps. For each step make plus or minus, so there are no empty steps. Only steps which actually change the brightness exist. Let's do that now you have a camera and you can do it yourself easily
+
+15. The keyboard's brightness: no slider, only − and +; each press goes to the next level the keys really show. The
+    levels measured with the camera (0x8040 swept 0–100). **Status:** started 8.10.2026
