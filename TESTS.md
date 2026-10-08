@@ -134,4 +134,57 @@ updater think the repo was not clean).
 
 ### Results
 
-(the Mac's Claude Code writes here)
+Run on the Mac, 8.10.2026, 04:47–04:56. Stopped after step 3: MR sends nothing, so the rest (recording on the
+keyboard and everything built on the G1 macro) could not run.
+
+**0. Pull and install — PASS.** `git checkout -- build/g815 build/list`, fast-forward to `db9cb12`, `./install.sh`:
+`built build/g815 and build/G815 Lights.app (v16)`, `login agent installed and started`.
+
+**1. No loop — PASS.** `grep -c "paint all: keyboard spoke"` gave 725, then 725 again 60 s later. (It was 1,062 at the
+end of T1, so the log was trimmed in between.) The start, quoted:
+
+    04:49:27.971  start, bank M1
+    04:49:27.991  keyboard on M1, mode 1
+    04:49:28.140  keyboard says: 11 ff 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:49:28.142  macros: G keys feature 0x0a, MR feature 0x0c
+    04:49:28.143  macros: G1–G5 left to the keyboard
+    04:49:28.211  paint all: bank M1 written
+    04:49:28.362  macros: G1–G5 left to the keyboard
+    04:49:28.745  paint all: keyboard spoke
+    04:49:30.984  paint all: start + 3 s
+    04:49:37.984  paint all: start + 10 s
+    04:49:57.984  paint all: start + 30 s
+    04:50:27.988  paint all: start + 60 s
+
+Odd but small: the first empty `0a` note arrives before `gIdx` is known, so it is logged as `keyboard says:` and
+repaints once. `G1–G5 left to the keyboard` is logged twice at every start (forced sync plus the reopen?). Same after
+the restart at 04:54:45.
+
+**2. Accessibility — PASS, with a storm of failed writes.** Marko clicked MR in the window and switched G815 Lights on.
+
+    04:52:06.988  macros: Accessibility allowed
+    04:52:07.010  macros: key tap on
+
+While he was doing it (04:51:59.981 – 04:52:05.929) the app wrote and reopened the keyboard in a tight loop:
+**422** times `error: write failed (0xe00002e2)` (kIOReturnNotPermitted), each followed by `keyboard opened` and
+`paint all: opened`, with `macros: G keys feature none, MR feature none` and one
+`error: no answer from feature index 0x10 function 1` in between. It healed by itself at 04:52:06. About 1,600 log
+lines in 6 s; the reopen probably wants a pause before retrying.
+
+**3. G1 and MR on the wire — FAIL: MR sends nothing.** Marko pressed MR once (04:52:30), then several times
+(04:53–04:54): **no line at all** in the log, not `MR:`, not `keyboard says:`. The MR light did **not** come on. To
+rule out a reader dead after the storm, the app was restarted
+(`launchctl kickstart -k gui/$(id -u)/community.auroville.g815lights`, 04:54:44, clean start, `keyboard on M1,
+mode 1`) and Marko pressed MR again: still nothing, only `paint all: start + 10 s` and `+ 30 s`. G1 was not pressed
+(no macro yet, so G1 is left to the keyboard and would show nothing).
+
+So, on this G815, in onboard mode (mode 1), MR produces no HID++ note on feature 0x0c (0x8030), and the keyboard does
+not light it by itself. Guess for the cloud: MR notes may need the 0x8030 "software control" call first (as 0x8010
+function 2 does for G keys), or host mode (onboard mode off, 0x8100) the way G HUB runs it. Note `mrLight(true)` is
+only called after an MR note arrives, so the light can never come on now.
+
+**4–10 — NOT RUN.** 4 (MR → G1 → abc → MR) needs MR. 5, 7 and 8 need the G1 macro from 4. 6 (editor), 9 (RECHECK)
+and 10 (colours) could run alone; left for the next round so the MR answer reaches the cloud first. Colours looked
+untouched to the eye during the session (not checked key by key).
+
+**11. Updater check — PASS.** `git status --porcelain` after the install: empty.
