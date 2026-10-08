@@ -165,3 +165,19 @@ painted yellow on screen; "Saving Not Supported".
 
 15. The keyboard's brightness: no slider, only − and +; each press goes to the next level the keys really show. The
     levels measured with the camera (0x8040 swept 0–100). **Status:** started 8.10.2026
+
+> (8.10.2026, ~08:25, on the Mac) actually, since there are not many levels of brightness, you just make small squares swatches so user can jump directly to brightness level
+
+16. The keyboard's brightness as five small squares, one per real level (OFF 12 25 50 100); a click jumps to it.
+    Replaces item 15's − and +. **Status:** started 8.10.2026
+
+> (8.10.2026, ~08:30, on the Mac) of course, keyboard brightness should also affect each individual key. We need to have a key brightness with the same swatches
+> what I mean by that I want to control for each individual key brightness with the same swatches
+> or replacing the key brightness slider
+
+17. KEY BRIGHTNESS (each key's own) as the same five squares, in place of its slider. **Status:** started 8.10.2026
+
+> (8.10.2026, ~08:35, on the Mac) if there are different steps between total keyboard brightness and each individual key brightness, adjust the new swatches to individual key. Test the key brightness resolution and adjust swatches to fit exactly so we don't lose any values
+
+18. Measure each key's own brightness (its colour scaled, 0x8081) with the camera and give KEY BRIGHTNESS squares
+    that fit its real steps, none lost. **Status:** started 8.10.2026
