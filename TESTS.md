@@ -67,4 +67,41 @@ The HID++ part is the unknown: which bytes G1 and MR really send. Steps 3 and 4 
 
 ### Results
 
-(the Mac's Claude Code writes here)
+Run on the Mac, 8.10.2026, 04:13–04:31, branch `claude/upbeat-mendel-yhjx3q`. Pushed after step 1, on Marko's word;
+steps 2–10 were not run.
+
+**1. Build and install — PASS, with a loop (FAIL for the app's behaviour).**
+`./install.sh` printed `built build/g815 and build/G815 Lights.app (v15)` and `login agent installed and started`.
+The log after start:
+
+    04:13:53.252  keyboard on M1, mode 1
+    04:13:53.397  keyboard says: 11 ff 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:13:53.399  macros: G keys feature 0x0a, MR feature 0x0c
+    04:13:53.399  macros: G1–G5 left to the keyboard
+    04:13:53.401  keyboard says: 11 ff 0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:13:53.402  MR: 11 ff 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:13:53.476  paint all: bank M1 written
+
+Nothing about the key tap (Accessibility still off), as expected.
+
+**Odd, and it matters: an endless repaint loop.** From the start the keyboard sends three empty messages every
+~0.77 s, and the app paints every key each time:
+
+    04:14:21.690  paint all: keyboard spoke
+    04:14:21.864  G keys: 11 ff 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:14:21.891  keyboard says: 11 ff 0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:14:21.891  MR: 11 ff 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    04:14:22.495  paint all: keyboard spoke
+
+It was still going at 04:31:03, with no key pressed: `paint all: keyboard spoke` is in the log 1,062 times. Before v15
+(up to 8.10.2026 03:11) there were 23 in the whole log. A reading of the code (not changed): `Store.heard` treats
+`0b` (byte 3 = 00, not the G-key or MR feature) as "keyboard spoke" → `repaintSoon` → `paintAll` → `syncGKeys`, which
+calls `0x8010` function 2 (`[0]`) and asks `index(of:)` again. The keyboard seems to answer every round with these
+three zero notifications on `0x0a`, `0x0b` (probably the M-keys feature 0x8020) and `0x0c`. The zero `G keys:` and `MR:`
+lines go to `macros.gKeys(0)` and `macros.mr(false)` every 0.77 s. That may hide or disturb real presses in steps 3–4,
+and it is a flicker risk for step 10.
+
+**2. Accessibility — NOT RUN.** The window was opened and Marko was asked by voice; no `macros: Accessibility
+allowed` or `macros: key tap on` in the log by 04:31.
+
+**3–10 — NOT RUN.**
