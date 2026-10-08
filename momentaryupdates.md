@@ -112,3 +112,9 @@ painted yellow on screen; "Saving Not Supported".
 > for lasso selection, I mean by lasso is a square selection, so just turn in G815 Lights application instead of free lasso. It needs to draw squares only
 
 3. Square selection instead of the free lasso. **Status:** done, v11: LASSO now draws a dashed amber rectangle from where the drag starts to the pointer, in any direction; keys whose centre is inside are chosen; shift adds, option takes away. Built and installed (old pid 59022, new pid 91582). Not yet tried by hand.
+
+## 8.10.2026
+
+> To selection modes we need to add mode single. That means I can select only one key at the time for modifications.
+
+4. SINGLE selection mode: only one key chosen at a time. **Status:** open
