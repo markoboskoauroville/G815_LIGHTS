@@ -58,7 +58,7 @@ painted yellow on screen; "Saving Not Supported".
 16. The login agent (paints at every start, no window). — **Status:** done (install.sh writes it; RunAtLoad)
 17. OpenRGB out of the login items (he said yes). — **Status:** done (its agent moved to ~/.g815/OpenRGB.plist.removed-2.10.2026; checked 8.10.2026: not in the login items)
 18. "All other points": app icon, documents (README, TAKEOVER, LESSONS), registry, handover; then the camera's
-    white balance and the MIDI apps as Swift-only. — **Status:** open
+    white balance and the MIDI apps as Swift-only. — **Status:** done for this app (icon, README/TAKEOVER/LESSONS, registry, handover; the camera in MANTRA_NDI). The MIDI apps as Swift-only belong to their own projects.
 
 > (2.10.2026, 03:30) Please remove this glowing effect from my keyboard application. Colors are good, but you don't need to really to use glow. Should be clear.
 
