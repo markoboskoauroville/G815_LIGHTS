@@ -122,3 +122,7 @@ painted yellow on screen; "Saving Not Supported".
 > (8.10.2026) Can you please add to this repro a Swift workflow so the app compiles in the GitHub?
 
 5. A GitHub workflow that compiles the app. **Status:** done: `.github/workflows/build.yml` runs `SIGN=- ./build.sh` on a macos-15 runner at every push and pull request (and by hand), and keeps the zipped app and build/g815 as a download. `build.sh` signs with "Mantra Apps" unless SIGN says otherwise, so his own builds are unchanged.
+
+> (8.10.2026) Please in the app make the version number which is in the upper right corner clickable so it takes me to GitHub to download the latest version.
+
+6. The version number top right is a link to GitHub, to download the latest version. **Status:** open
