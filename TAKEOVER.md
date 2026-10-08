@@ -13,6 +13,9 @@ only (no Xcode project).
    starts it. Run it again after any change.
    GitHub builds the same with `SIGN=- ./build.sh` (`.github/workflows/build.yml`, ad hoc signature, on every
    push): a red build there means the Swift does not compile.
+   The app updates itself (v14, `app/Update.swift`): it fetches main in this repo, and when VERSION there is
+   higher it pulls, runs `./build.sh` and restarts. Only from a clean checkout on main; anything else it only
+   reports top right. So: develop on a branch, merge into main, bump VERSION, and every Mac running it follows.
 3. **Input Monitoring** (System Settings › Privacy & Security › Input Monitoring): **G815 Lights** on. The
    light interface shares the keyboard's USB interface, so opening it needs this; without it the window says
    `could not open the G815 (0xe00002e2)`. Granting it is Marko's own act.

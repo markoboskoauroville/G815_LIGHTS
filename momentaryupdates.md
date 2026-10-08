@@ -126,3 +126,13 @@ painted yellow on screen; "Saving Not Supported".
 > (8.10.2026) Please in the app make the version number which is in the upper right corner clickable so it takes me to GitHub to download the latest version.
 
 6. The version number top right is a link to GitHub, to download the latest version. **Status:** done in code, v13: the version number opens github.com/markoboskoauroville/G815_LIGHTS/releases/latest; the workflow now publishes the release v<VERSION> (zipped app + g815) on every push to main. Until this branch is merged into main there is no release yet, so the page is empty.
+
+> (8.10.2026) Or even if it's possible that this app auto updates when a new version is detected.
+
+> (8.10.2026) This repo can go public.
+
+> (8.10.2026) Test update on my local computer application is running and updated to the next version.
+
+7. The app updates itself when a new version is on GitHub. Asked how (an ad hoc GitHub build loses Input Monitoring, LESSONS 6), he chose "rebuild on this Mac". **Status:** done in code, v14 (app/Update.swift): two minutes after start, every 6 hours and when the window opens, `git fetch origin main` in the repo the app was built from; a higher VERSION there and a clean main → `git pull --ff-only`, ./build.sh (signed Mantra Apps), and a restart through the login agent once the window is closed and the keyboard has no job; the amber note top right ("v15 READY · RESTART") restarts at once and brings the window back. The repo is on another branch or has changes → it only says so. Compiled by GitHub; not yet run on his Mac.
+8. The repo public. **Status:** it already is (GitHub answers without a login, 8.10.2026).
+9. Test the update on his Mac: the running app goes to the next version by itself. **Status:** open. It needs his Mac (this session runs in the cloud): this branch merged into main, his repo on main with v14 installed, then a v15 on main.

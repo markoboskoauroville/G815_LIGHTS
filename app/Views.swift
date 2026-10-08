@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-let VERSION = 13
+let VERSION = 14
+/// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
 let LATEST = URL(string: "https://github.com/markoboskoauroville/G815_LIGHTS/releases/latest")!
@@ -230,6 +231,7 @@ struct NumField: View {
 // ---------------------------------------------------------------- the window
 struct MainView: View {
     @ObservedObject var store: Store
+    @ObservedObject var updater: Updater
     @State private var sel = Set<String>()
     @State private var hsv = HSV(h: 0, s: 0, v: 1)
     @State private var keyB = 100
@@ -300,6 +302,7 @@ struct MainView: View {
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
                 Spacer()
                 Word(text: store.checking ? "CHECKING…" : "RECHECK KEYBOARD", state: .amber) { store.recheck() }
+                if !updater.note.isEmpty { Word(text: updater.note, state: .amber, size: 11) { updater.act() } }
                 Link(destination: LATEST) { Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand) }
                     .buttonStyle(.plain).focusable(false).help("download the latest version from GitHub")
             }

@@ -31,6 +31,10 @@ final class Wire: Thread {
 
     var queued: Int { lock.lock(); defer { lock.unlock() }; return jobs.count }
 
+    /// nothing waiting and nothing running: the updater restarts the app only then, never inside a bank write
+    private var running = false
+    var idle: Bool { lock.lock(); defer { lock.unlock() }; return jobs.isEmpty && !running }
+
     /// RECHECK (Marko, 6.10.2026): the next job closes the keyboard and opens it again from nothing, as at a replug
     private var fresh = false
     func reopen() { lock.lock(); fresh = true; lock.unlock() }
@@ -41,7 +45,9 @@ final class Wire: Thread {
             while jobs.isEmpty { lock.wait() }
             let job = jobs.removeFirst()
             if fresh { fresh = false; kb = nil }
+            running = true
             lock.unlock()
+            defer { lock.lock(); running = false; lock.unlock() }
             do {
                 if kb == nil { kb = try G815(); kb!.onUnasked = onUnasked; onOpen?() }
                 try job(kb!)

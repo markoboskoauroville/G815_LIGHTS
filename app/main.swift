@@ -11,6 +11,7 @@ import SwiftUI
 
 final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var store: Store!
+    var updater: Updater!
     var window: NSWindow?
     var poll: Timer?
     var usb: IOHIDManager?
@@ -44,6 +45,10 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.store.poll() }
             }
+            // the new version from GitHub, built here (Update.swift)
+            updater = Updater(wireIdle: { [weak self] in self?.store.wire.idle ?? true },
+                              windowOpen: { [weak self] in self?.window?.isVisible ?? false })
+            updater.start()
         }
         // the keyboard arriving on USB (a replug, or macOS resetting it during boot and login): paint again
         let m = IOHIDManagerCreate(kCFAllocatorDefault, 0)
@@ -63,7 +68,9 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { MainActor.assumeIsolated { self?.store.paintAll(name.rawValue) } }
             }
         }
-        if CommandLine.arguments.contains("--background") {
+        // a restart by the updater from an open window comes back with the window
+        let reopened = Updater.takeShowFlag()
+        if CommandLine.arguments.contains("--background") && !reopened {
             NSApp.setActivationPolicy(.accessory)
         } else {
             show()
@@ -83,12 +90,13 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             w.backgroundColor = NSColor(red: 0x0B / 255, green: 0x0D / 255, blue: 0x10 / 255, alpha: 1)
             w.isReleasedWhenClosed = false
             w.delegate = self
-            w.contentView = NSHostingView(rootView: MainView(store: store))
+            w.contentView = NSHostingView(rootView: MainView(store: store, updater: updater))
             w.setFrameAutosaveName("G815LightsMain")
             if !w.setFrameUsingName("G815LightsMain") { w.center() }
             window = w
         }
         window?.makeKeyAndOrderFront(nil)
+        updater?.check()
         NSApp.activate(ignoringOtherApps: true)
     }
 

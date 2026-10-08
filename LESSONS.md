@@ -78,3 +78,10 @@ bank's memory (one colour) and the app follows it. v9 offers BACK TO Mx, a LOCK,
 Testing the lasso with Hammerspoon: clicks on LASSO and NONE did nothing while the drag still worked, because
 the window was not key and SwiftUI's plain buttons take the first click only to activate. Focus the window
 (`w:focus()`, wait half a second) before posting clicks.
+
+## 13. The app updates by building, not by downloading (8.10.2026)
+
+An app downloaded from GitHub is signed ad hoc and would lose Input Monitoring at every update (6). So the
+updater pulls main into the repo the app sits in and runs ./build.sh, signed "Mantra Apps", then restarts through
+`launchctl kickstart -k` (the login agent has no KeepAlive; launchd kills the job's process group when its app
+quits, so a child left to "restart later" would die with it).
