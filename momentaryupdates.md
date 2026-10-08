@@ -140,3 +140,13 @@ painted yellow on screen; "Saving Not Supported".
 > (8.10.2026) For any chain of commands like this, fix it: merge branch into main and install the same terminal. Always put it in repository manifest. In manifest you always give me the chain of commands so I can just copy-paste one block and it will execute one after the other. Please make that always.
 
 10. Every chain of commands he has to run goes into MANIFEST.md as one block to copy and paste, each command running after the one before (and stopping at the first that fails). Kept up to date by every session: the rule is in CLAUDE.md. **Status:** done: MANIFEST.md (merge this branch into main, push, install), CLAUDE.md
+
+## 8.10.2026 — macros
+
+> Please let's build now macro functions for this keyboard. So when user presses MR button which is still not available in the interface, it will be able to create macros and the macros will be stored on local computer and updated every time the computer starts. The same principles of memory handling as light color of the light, but now we have macros and macro can be run with any key on the keyboard of course G1 to G5, but anyone can be assigned as macro trigger. Let's build macro editor and macro recorder for this keyboard now.
+
+11. Macros: MR (on the keyboard and in the window) records; a macro editor and recorder in the window; kept on the Mac (~/.g815/settings.json) like the colours, per bank M1 M2 M3, put back at every start; any key can trigger one, G1–G5 first of all. **Status:** started
+
+> (8.10.2026) After you build, you need to work with local Claude code for testing. So we are building here and testing in Claude code. It means that in MD need to create MD in repository in GitHub to exchange the test results and give a test task to local CloudCode. And I'm going to copy-paste command between two of you, and you are going to be able to test app on my computer and build it from here from the cloud.
+
+12. TESTS.md in the repo: the cloud session writes the test task, the Claude Code on his Mac runs it on the real keyboard and writes the results back (commit, push); he only carries one line between the two. The rule in CLAUDE.md. **Status:** started
