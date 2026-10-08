@@ -23,8 +23,9 @@ Marko carries one line each way:
    (`tail -n 100 ~/.g815/log.txt`); quote the lines, they are the evidence.
 4. Write the results under the task's **Results** heading: per step PASS, FAIL or NOT RUN, what was seen, the log
    lines. Anything odd, write it, even if the step passed.
-5. Then: `git add TESTS.md && git commit -m "TESTS: results T<n>" && git pull --rebase origin <branch> && git push
-   origin <branch>`, and tell Marko: "Results pushed. Tell the cloud: Test results are in TESTS.md."
+5. Then (all of it; the cloud reads only what is on GitHub): `git add TESTS.md && git commit -m "TESTS: results T<n>" && git pull --rebase origin <branch> && git push
+   origin <branch>`. Check it arrived: `git status` must say "up to date with 'origin/<branch>'". Only then tell
+   Marko: "Results pushed. Tell the cloud: Test results are in TESTS.md."
 
 ---
 

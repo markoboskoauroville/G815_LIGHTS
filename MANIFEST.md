@@ -4,20 +4,18 @@ One block: copy it, paste it into Terminal, press Return. The commands run one a
 first one that fails, so nothing runs on top of a failure. Every session that leaves something for the Mac to do
 writes the block here (CLAUDE.md).
 
-## Now: test the macros (v15) with the Claude Code on this Mac (8.10.2026)
+## Now: send the T1 results to GitHub (8.10.2026)
 
-Fetches the branch with v15, puts this folder on it, and starts Claude Code on test T1 in TESTS.md. Claude Code
-builds and installs v15 itself, asks you to press keys (G1, MR …) and to allow Accessibility, then writes the
-results into TESTS.md and pushes them.
+The test results were written into TESTS.md on the Mac but never reached GitHub, so the cloud cannot read them.
+This checks the folder is on the test branch, commits TESTS.md if it is not committed yet, and pushes.
 
 ```sh
-cd ~/Developer/G815_LIGHTS && git fetch origin claude/upbeat-mendel-yhjx3q && git checkout claude/upbeat-mendel-yhjx3q && git pull --ff-only origin claude/upbeat-mendel-yhjx3q && claude "Read TESTS.md and run test T1 as it says. Write the results into TESTS.md, commit and push them."
+cd ~/Developer/G815_LIGHTS && test "$(git branch --show-current)" = claude/upbeat-mendel-yhjx3q && git add TESTS.md && (git diff --cached --quiet || git commit -m "TESTS: results T1") && git pull --rebase origin claude/upbeat-mendel-yhjx3q && git push origin claude/upbeat-mendel-yhjx3q && git log --oneline -1
 ```
 
-Done when Claude Code says "Results pushed". Then tell the cloud session: `Test results are in TESTS.md.`
-
-While this folder is on the test branch, the app does not update itself from main (it says so top right); the
-"Always" block below puts it back on main.
+Done when the last line shows a commit like `TESTS: results T1`. Then tell the cloud: `Test results are in TESTS.md.`
+If it stops at once with no message, the folder is on another branch: send the cloud the output of
+`cd ~/Developer/G815_LIGHTS && git status && git log --oneline -3`.
 
 ## Always: build and install what main has
 
