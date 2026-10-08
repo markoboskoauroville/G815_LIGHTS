@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 11
+let VERSION = 12
 
 extension Color {
     init(hex: String) {
@@ -44,13 +44,18 @@ struct HSV: Equatable {
 }
 
 // ---------------------------------------------------------------- the keyboard
+/// how a click or drag on the board chooses keys: PAINT (drag across keys), LASSO (a box), SINGLE (one key only)
+enum SelectMode { case paint, lasso, single }
+
 struct Board: View {
     @ObservedObject var store: Store
     @Binding var sel: Set<String>
     /// LASSO (Marko, 6.10.2026: "add a selection method with the lasso"), then v11: "I mean by lasso is a square
     /// selection ... it needs to draw squares only". A drag draws a rectangle from where it started to where the pointer
     /// is; every key whose centre is inside is chosen. Shift adds to the choice, Option takes away, plain replaces it.
-    var lasso = false
+    /// SINGLE (Marko, 8.10.2026: "I can select only one key at the time for modifications"): the key under the
+    /// pointer is the only one chosen; a drag moves the choice from key to key.
+    var mode = SelectMode.paint
     var onChosen: () -> Void
     @State private var adding = true
     @State private var lastId: String?
@@ -86,7 +91,7 @@ struct Board: View {
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onChanged { g in
-                    if lasso {
+                    if mode == .lasso {
                         if boxFrom == nil { boxFrom = g.startLocation }
                         boxTo = g.location
                         return
@@ -97,6 +102,10 @@ struct Board: View {
                         return
                     }
                     guard let k = store.layout.keys.first(where: { p.x >= $0.x && p.x < $0.x + $0.w && p.y >= $0.y && p.y < $0.y + $0.h }) else { return }
+                    if mode == .single {
+                        if sel != [k.id] { sel = [k.id] }
+                        return
+                    }
                     if g.translation == .zero || lastId == nil { adding = !sel.contains(k.id) }
                     if k.id != lastId {
                         if adding { sel.insert(k.id) } else { sel.remove(k.id) }
@@ -104,7 +113,7 @@ struct Board: View {
                     }
                 }
                 .onEnded { _ in
-                    if lasso {
+                    if mode == .lasso {
                         defer { boxFrom = nil }
                         guard let r = box, r.width > 2 || r.height > 2 else { return }
                         let inside = Set(store.layout.keys.filter { k in
@@ -235,7 +244,7 @@ struct MainView: View {
     @State private var r = 255
     @State private var g = 255
     @State private var b = 255
-    @State private var lasso = false
+    @State private var mode = SelectMode.paint
 
     private func label(_ t: String) -> some View { Text(t).font(mono(10, .semibold)).tracking(1.6).foregroundColor(.dimSand) }
 
@@ -304,20 +313,29 @@ struct MainView: View {
                     Text("LOCK M\(store.s.active): M keys on the keyboard do nothing").font(mono(11, .regular)).foregroundColor(.sand)
                 }.toggleStyle(.checkbox)
             }
-            Board(store: store, sel: $sel, lasso: lasso, onChosen: pickFromSelection)
+            Board(store: store, sel: $sel, mode: mode, onChosen: pickFromSelection)
                 .aspectRatio(store.layout.w / store.layout.h, contentMode: .fit)
             HStack(spacing: 4) {
                 label("KEYS").padding(.trailing, 6)
-                Word(text: "ALL") { sel = Set(store.layout.keys.map(\.id)); pickFromSelection() }
+                // SINGLE: ALL and SAME COLOUR would choose many keys, so they are dead while it is on
+                Word(text: "ALL", state: mode == .single ? .dead : .off) {
+                    guard mode != .single else { return }
+                    sel = Set(store.layout.keys.map(\.id)); pickFromSelection()
+                }
                 Word(text: "NONE") { sel = [] }
-                Word(text: "LASSO", state: lasso ? .on : .off) { lasso.toggle() }
-                Word(text: "SAME COLOUR") {
-                    guard let f = sel.first else { return }
+                Word(text: "LASSO", state: mode == .lasso ? .on : .off) { mode = mode == .lasso ? .paint : .lasso }
+                Word(text: "SINGLE", state: mode == .single ? .on : .off) {
+                    mode = mode == .single ? .paint : .single
+                    if mode == .single, sel.count > 1 { sel = [] }
+                }
+                Word(text: "SAME COLOUR", state: mode == .single ? .dead : .off) {
+                    guard mode != .single, let f = sel.first else { return }
                     let k = store.key(f)
                     for c in store.layout.keys where store.key(c.id) == k { sel.insert(c.id) }
                 }
-                Text(lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
-                           : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
+                Text(mode == .single ? (sel.isEmpty ? "click one key" : "\(store.layout.keys.first { sel.contains($0.id) }?.l ?? "") chosen · one key at a time")
+                     : mode == .lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
+                     : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
             }
             HStack(alignment: .top, spacing: 30) {
                 VStack(alignment: .leading, spacing: 10) {

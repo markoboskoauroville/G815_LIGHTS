@@ -117,4 +117,4 @@ painted yellow on screen; "Saving Not Supported".
 
 > To selection modes we need to add mode single. That means I can select only one key at the time for modifications.
 
-4. SINGLE selection mode: only one key chosen at a time. **Status:** open
+4. SINGLE selection mode: only one key chosen at a time. **Status:** done in code, v12: SINGLE in the KEYS row (green when on, off again with a second click; LASSO and SINGLE take turns, neither on = drag across keys as before). A click chooses that key alone and its colour comes into the picker; a drag moves the choice from key to key; ALL and SAME COLOUR are grey and do nothing while it is on; turning it on with many keys chosen clears the choice. Written in a cloud session with no Swift compiler: not yet built, installed or tried on his Mac (run ./install.sh).
