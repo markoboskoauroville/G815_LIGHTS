@@ -4,10 +4,9 @@ One block: copy it, paste it into Terminal, press Return. The commands run one a
 first one that fails, so nothing runs on top of a failure. Every session that leaves something for the Mac to do
 writes the block here (CLAUDE.md).
 
-## Now: nothing to run (8.10.2026)
+## Now: nothing to run (9.10.2026)
 
-v18 is on main and installed on this Mac (G keys never F keys, host mode, brightness squares). The app updates itself
-from main from now on.
+v20 is on main and installed on this Mac: M KEYS LIGHT (OFF / ON) under KEYBOARD BRIGHTNESS. Try it: TESTS.md T5.
 
 ## Always: build and install what main has
 

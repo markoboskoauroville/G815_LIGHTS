@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 19
+let VERSION = 20
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
@@ -226,6 +226,7 @@ struct Word: View {
 struct LevelSquares: View {
     let value: Int
     var steps = Store.brightSteps
+    var names: [String]? = nil          // v20: words under the squares in place of the numbers (M KEYS LIGHT: OFF ON)
     let pick: (Int) -> Void
     var body: some View {
         let level = Store.level(value, steps)
@@ -237,11 +238,11 @@ struct LevelSquares: View {
                         .fill(Color.amber.opacity(i == 0 ? 0.06 : 0.2 + 0.8 * Double(v) / 100))
                         .frame(width: 26, height: 26)
                         .overlay(RoundedRectangle(cornerRadius: 3).stroke(i == level ? Color.sand : Color.dead, lineWidth: i == level ? 2 : 1))
-                    Text(i == 0 ? "OFF" : "\(v)").font(mono(10, .regular)).foregroundColor(i == level ? .sand : .dimSand)
+                    Text(names?[i] ?? (i == 0 ? "OFF" : "\(v)")).font(mono(10, .regular)).foregroundColor(i == level ? .sand : .dimSand)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { pick(v) }
-                .help(i == 0 ? "off" : "brightness \(v)%")
+                .help(names?[i].lowercased() ?? (i == 0 ? "off" : "brightness \(v)%"))
             }
         }
     }
@@ -465,6 +466,11 @@ struct MainView: View {
                     label("KEYBOARD BRIGHTNESS").padding(.top, 10)
                     // v18: one small square per level the keys really show; a click jumps to it (LevelSquares)
                     LevelSquares(value: store.brightness) { store.setBrightness($0) }
+                    label("M KEYS LIGHT").padding(.top, 10)
+                    // v20 (Marko, 9.10.2026: "change the brightness of memory key and 1 and 2 and m3"): the keyboard has
+                    // only on and off for M1–M3, lit at the keyboard's brightness; MR's light cannot be set (LESSONS 18, 21)
+                    LevelSquares(value: store.s.mLight ? 100 : 0, steps: [0, 100], names: ["OFF", "ON"]) { store.setMLight($0 > 0) }
+                        .help("M1–M3 have no brightness of their own: lit, they follow KEYBOARD BRIGHTNESS. MR's light cannot be set.")
                 }
             }
             }

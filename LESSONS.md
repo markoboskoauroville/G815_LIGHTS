@@ -135,3 +135,13 @@ Measured with the camera. The keyboard's own brightness (0x8040; getInfo says ma
 (0x8081): 0–44 is as dark as 0 even at keyboard brightness 100, light starts at 45 (18 %), small stairs to 64, then
 smooth to 255. So a key's brightness squares start at 18 %, and a weak channel of a colour (orange's blue) goes out
 before the others when a key is dimmed.
+
+## 21. The M lights have no brightness of their own: on or off (9.10.2026)
+
+Marko asked for the brightness of M1, M2, M3 and MR. The keyboard offers none: 0x8020 (v0) has fn 0 (count: 3) and
+fn 1 (a bit per M key, host mode only, LESSONS 17), nothing else; 0x8071 has two zones only (cluster 0 at location 2,
+the keys; cluster 1 at location 1, the logo) and no M zone; 0x8040 is the whole keyboard (getInfo: max 100, 5
+steps); M1–M3 are not among the per-key indexes 0x8081 accepts, and MR's light cannot be set at all (LESSONS 18). So
+v20 gives what exists: M KEYS LIGHT, OFF or ON, kept in settings.json (`mLight`) and sent with every host-mode set-up;
+lit, an M key shines at the keyboard's brightness. Not measured with the camera on 9.10.2026 (no camera on the
+keyboard that morning): whether 0x8040 really dims the M lights is still to be seen.

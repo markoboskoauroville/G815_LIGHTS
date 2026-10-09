@@ -99,6 +99,8 @@ struct Settings: Codable {
     ]
     /// v15: every macro, whichever bank uses it (Macros.swift)
     var macros: [Macro] = []
+    /// v20: the active bank's M key lit (true) or dark (false); the M lights have no brightness of their own (LESSONS 21)
+    var mLight = true
 
     init() {}
     init(from d: Decoder) throws {          // settings saved before v9 have no "locked"
@@ -107,6 +109,7 @@ struct Settings: Codable {
         active = try k.decodeIfPresent(Int.self, forKey: .active) ?? 1
         locked = try k.decodeIfPresent(Bool.self, forKey: .locked) ?? false
         presets = try k.decodeIfPresent([Preset].self, forKey: .presets) ?? presets
+        mLight = try k.decodeIfPresent(Bool.self, forKey: .mLight) ?? true
         macros = try k.decodeIfPresent([Macro].self, forKey: .macros) ?? []
     }
 }
@@ -274,7 +277,7 @@ final class Store: ObservableObject {
     func syncGKeys(force: Bool = false) {
         guard force || gSoft != true || gIdx == nil else { return }
         gSoft = nil
-        let bankNow = s.active
+        let mMask = UInt8(s.mLight ? 1 << (s.active - 1) : 0)      // v20: M KEYS LIGHT off leaves them dark
         wire.run { [weak self] kb in
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
             let mk = (try? kb.index(of: 0x8020)) ?? nil
@@ -290,7 +293,7 @@ final class Store: ObservableObject {
             if (try? kb.onboardMode()) != 2 { try kb.setOnboardMode(2); toHost = true }
             var done = false
             if let g { done = (try? kb.call(g, 2, [1])) != nil }
-            if let mk { _ = try? kb.call(mk, 1, [UInt8(1 << (bankNow - 1))]) }
+            if let mk { _ = try? kb.call(mk, 1, [mMask]) }
             DispatchQueue.main.async {
                 guard let self else { return }
                 // host mode starts with every key dark: paint them at once
@@ -441,6 +444,19 @@ final class Store: ObservableObject {
     func setBrightness(_ v: Int) {
         brightness = v
         wire.run { kb in try kb.setBrightness(max(0, min(100, v))) }
+    }
+
+    /// v20, M KEYS LIGHT (Marko, 9.10.2026: "change the brightness of memory key and 1 and 2 and m3"). The keyboard
+    /// offers only on and off for M1–M3 (0x8020 fn 1, a bit per key, host mode) and nothing for MR (LESSONS 18, 21):
+    /// lit, the M key shines at the keyboard's brightness.
+    func setMLight(_ on: Bool) {
+        s.mLight = on
+        save()
+        let mask = UInt8(on ? 1 << (s.active - 1) : 0)
+        wire.run { kb in
+            if let mk = (try? kb.index(of: 0x8020)) ?? nil { _ = try kb.call(mk, 1, [mask]) }
+        }
+        Store.log("M keys light " + (on ? "on" : "off"))
     }
 
     /// Once a second: is it there, which bank, how bright. A keyboard that comes back is painted again;

@@ -191,4 +191,6 @@ painted yellow on screen; "Saving Not Supported".
 > please, while you are waiting for new instructions from Djapp Cloud, fix my application g815 so I can also change the brightness of memory key and 1 and 2 and m3. Please update my app so it's able to control these settings
 
 19. The lights of the memory keys (M1, M2, M3, and MR if it can be done) get a brightness the user sets in the
-    window, like any other key. **Status:** started 9.10.2026
+    window, like any other key. **Status:** v20 on the Mac, 9.10.2026: the keyboard has no brightness for the M lights,
+    only on and off (LESSONS 21), and MR's light cannot be set (LESSONS 18). So M KEYS LIGHT, two squares OFF ON under
+    KEYBOARD BRIGHTNESS; lit, they follow the keyboard's brightness. Built, installed, running; the click is his to try (TESTS T5).

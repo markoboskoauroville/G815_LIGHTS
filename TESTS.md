@@ -416,3 +416,16 @@ Corrections to T3's notes: TAKE IT AWAY does show whenever the key has a macro (
 cut just under PUT … HERE. RECORD replacing a macro's steps is meant (its help says so). The recording focus is fixed:
 RECORD takes the focus from the step fields.
 Not watched: host mode across a night's sleep and a cold boot (the app takes the keyboard over at every open).
+
+## T5 — v20, M KEYS LIGHT, 9.10.2026
+
+**Branch:** main · **Status:** open (his eye and hand)
+
+Marko, 9.10.2026: "change the brightness of memory key and 1 and 2 and m3". The keyboard has only on/off for M1–M3
+(LESSONS 21). Done on the Mac: v20 built (signed Mantra Apps), installed with ./install.sh, running (pid 18186 → 18741);
+the log shows host mode and the paint. No camera saw the keyboard that morning, so the light itself is not checked.
+
+1. Open G815 Lights from the star. Under KEYBOARD BRIGHTNESS: M KEYS LIGHT, squares OFF and ON, ON outlined.
+2. Click OFF: the lit M key goes dark; `~/.g815/log.txt` says `M keys light off`.
+3. Press M2 on the keyboard: the bank switches, the M keys stay dark.
+4. Click ON: M2 lights. Set KEYBOARD BRIGHTNESS to 12, then 100: say whether the M light dims with it.
