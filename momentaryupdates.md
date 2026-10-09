@@ -185,3 +185,10 @@ painted yellow on screen; "Saving Not Supported".
 18. Measure each key's own brightness (its colour scaled, 0x8081) with the camera and give KEY BRIGHTNESS squares
     that fit its real steps, none lost. **Status:** done in v18: 0–44 dark, light from 45 (18 %), then smooth; squares
     OFF 18 30 45 60 80 100 (LESSONS 20). ESC set to 30 and 100 from the squares, read back from settings.json.
+
+## 9.10.2026, ~07:35, on the Mac — brightness of the memory keys
+
+> please, while you are waiting for new instructions from Djapp Cloud, fix my application g815 so I can also change the brightness of memory key and 1 and 2 and m3. Please update my app so it's able to control these settings
+
+19. The lights of the memory keys (M1, M2, M3, and MR if it can be done) get a brightness the user sets in the
+    window, like any other key. **Status:** started 9.10.2026
