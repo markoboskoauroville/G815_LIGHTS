@@ -201,7 +201,7 @@ painted yellow on screen; "Saving Not Supported".
 
 The first row of the main window is ON / OFF; OFF stops the engine and quits; closing the window leaves the app on; the star only opens it.
 
-**Status:** saved before any code.
+**Status:** v21 built 19.10.2026: G815 LIGHTS ON OFF on the first row (OFF = NSApp.terminate; applicationWillTerminate gives the keyboard its own mode back; the login agent has no KeepAlive, so it stays off). Closing the window already left the keeper running and the reopen already showed it (v1). Restarted through the login agent: old pid 696, new pid 46849 (--background, no window, as it was); the window seen once by screenshot in between. TESTS T6. Marko to try OFF.
 
 ## 19.10.2026: ✕ close at the far upper-right corner
 
@@ -209,4 +209,4 @@ The first row of the main window is ON / OFF; OFF stops the engine and quits; cl
 
 A ✕ at the window's top-right corner, on the ON / OFF row: it closes the window only, the app stays ON. Every other dialog gets the same ✕ in its corner. The title bar and its traffic lights stay.
 
-**Status:** saved before any code.
+**Status:** v21: ✕ (SF Symbol xmark, grey #7A8087, 28×28) at the far right of the first row, after v21; performClose, the keeper stays. The preset rename popover has the same ✕ in its corner. Seen by screenshot. Marko to try it (TESTS T6).

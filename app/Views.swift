@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let VERSION = 20
+let VERSION = 21
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
@@ -209,6 +209,18 @@ struct Picker: View {
     }
 }
 
+/// v21: ✕ at the far upper-right corner closes its window or dialog only; the keeper stays ON (Marko, 19.10.2026:
+/// "please unify the position of the close button on every application. It's far upper right corner. There is X to
+/// close the dialog in every dialog, same.")
+struct CloseX: View {
+    let act: () -> Void
+    var body: some View {
+        Button(action: act) { Image(systemName: "xmark").font(.system(size: 14, weight: .semibold)).foregroundColor(.off)
+            .frame(width: 28, height: 28).contentShape(Rectangle()) }
+            .buttonStyle(.plain).focusable(false)
+    }
+}
+
 struct Word: View {
     let text: String
     var state: Color = .off
@@ -294,7 +306,7 @@ struct MainView: View {
     /// the rename pop-up: an empty name leaves only the swatch; AUTOMATIC NAME says the colour in words
     private func renamer(_ p: Preset) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            label("PRESET NAME")
+            HStack { label("PRESET NAME"); Spacer(); CloseX { renaming = nil } }
             TextField("no name: only the swatch", text: $renameText).textFieldStyle(.plain).font(mono(13, .regular))
                 .foregroundColor(.sand).frame(width: 260).padding(5)
                 .background(RoundedRectangle(cornerRadius: 4).stroke(Color.dead))
@@ -347,6 +359,11 @@ struct MainView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 Text("G815 LIGHTS").font(mono(14)).tracking(3).foregroundColor(.sand)
+                // v21, ON / OFF first (Marko, 19.10.2026: "In the top of every user interface, there will now be an on/off
+                // switch"): running is ON; OFF gives the keyboard its own mode back (applicationWillTerminate) and quits.
+                // The login agent has no KeepAlive, so OFF stays off until the next login.
+                Word(text: "ON", state: .on) {}
+                Word(text: "OFF", state: .off) { NSApp.terminate(nil) }
                 Circle().fill(store.connected ? Color.on : Color(hex: "FF3B30")).frame(width: 8, height: 8)
                 Text(store.connected ? "G815 \(store.serial)" : (store.error.isEmpty ? "looking for the keyboard" : store.error))
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
@@ -355,6 +372,8 @@ struct MainView: View {
                 if !updater.note.isEmpty { Word(text: updater.note, state: .amber, size: 11) { updater.act() } }
                 Link(destination: LATEST) { Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand) }
                     .buttonStyle(.plain).focusable(false).help("download the latest version from GitHub")
+                CloseX { NSApp.keyWindow?.performClose(nil) }.help("close the window; the keyboard's keeper stays on")
+                    .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
             }
 
             HStack(spacing: 4) {

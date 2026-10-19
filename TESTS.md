@@ -429,3 +429,18 @@ the log shows host mode and the paint. No camera saw the keyboard that morning, 
 2. Click OFF: the lit M key goes dark; `~/.g815/log.txt` says `M keys light off`.
 3. Press M2 on the keyboard: the bank switches, the M keys stay dark.
 4. Click ON: M2 lights. Set KEYBOARD BRIGHTNESS to 12, then 100: say whether the M light dims with it.
+
+## T6 — v21, ON / OFF and ✕ at the top, 19.10.2026
+
+**Branch:** main · **Status:** open (his hand)
+
+Marko, 19.10.2026: "In the top of every user interface, there will now be an on/off switch" and "please unify the
+position of the close button on every application. It's far upper right corner." Done on the Mac: v21 built (signed
+Mantra Apps), the login agent restarted (pid 696 → 46849, --background); the window seen once by screenshot with
+G815 LIGHTS ON OFF at the left of the first row and ✕ at its far right, then the agent restarted again without it.
+
+1. Open G815 Lights from the star: the first row reads G815 LIGHTS ON OFF … v21 ✕, ON green.
+2. Click ✕: the window goes, the keys stay lit, the M keys still switch banks (the keeper runs). The star opens it again.
+3. A preset's rename box (click a preset's name): ✕ in its top-right corner closes it.
+4. Click OFF: the app quits, the keyboard goes back to its own mode on the same bank (`~/.g815/log.txt`), the star's
+   tick goes off; it stays off until the star opens it or the next login.

@@ -20,6 +20,10 @@ this one keyboard, nothing else.** Built 2.10.2026 because OpenRGB showed colour
   pressed; quitting gives the keyboard its own mode back on the same bank. MR's own light cannot be set on this
   keyboard (LESSONS 18); the drawing's MR shows it.
 - A login agent starts it without a window; the star's row (Keyboard and mouse › G815 Lights) opens the window.
+- ON / OFF and ✕ (v21, 19.10.2026, Marko: "In the top of every user interface, there will now be an on/off switch";
+  "It's far upper right corner"): the first row reads G815 LIGHTS ON OFF, with the version and a ✕ at the far right.
+  OFF gives the keyboard its own mode back and quits (until the star opens it or the next login); ✕ closes the window
+  and the keeper stays; a preset's rename box has the same ✕.
 
 | Document | For |
 |---|---|
