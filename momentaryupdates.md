@@ -194,3 +194,11 @@ painted yellow on screen; "Saving Not Supported".
     window, like any other key. **Status:** v20 on the Mac, 9.10.2026: the keyboard has no brightness for the M lights,
     only on and off (LESSONS 21), and MR's light cannot be set (LESSONS 18). So M KEYS LIGHT, two squares OFF ON under
     KEYBOARD BRIGHTNESS; lit, they follow the keyboard's brightness. Built, installed, running; the click is his to try (TESTS T5).
+
+## 19.10.2026: ON / OFF at the top of the window
+
+> "When I select any of the apps, the user interface opens up. In the top of every user interface, there will now be an on/off switch ... If I say on, I close it's on ... When I just switch the check mark, and that's how I activate it. This is gone. Let's work like this. This is the workflow now." (Marko, 19.10.2026; the rule in MANTRA_MANIFEST modules/swift-apps.md, "ON / OFF at the top of every window")
+
+The first row of the main window is ON / OFF; OFF stops the engine and quits; closing the window leaves the app on; the star only opens it.
+
+**Status:** saved before any code.
