@@ -34,7 +34,9 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         // the G815's light interface sits beside its keys, so macOS asks for Input Monitoring; this shows
         // the system's own question once (System Settings > Privacy & Security > Input Monitoring)
-        if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) != kIOHIDAccessTypeGranted {
+        // v22: never at login (--background, --login): the window's PERMISSIONS waits for him (swift-apps.md)
+        let atLogin = CommandLine.arguments.contains("--background") || CommandLine.arguments.contains("--login")
+        if !atLogin && IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) != kIOHIDAccessTypeGranted {
             IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
         }
         MainActor.assumeIsolated {

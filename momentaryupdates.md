@@ -215,4 +215,4 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 
 > please make this in every application that needs some permission. If permissions are not set, it needs to have text in the top right: "Permissions." Then I click on it, and it opens me directly to my settings page where I need to set permissions.
 
-**Status:** requested 30.10.2026; being built (MANTRA_MANIFEST swift-apps.md, last section).
+**Status:** done in v22 (30.10.2026): PERMISSIONS (amber, the row's own Word) on the ON / OFF row, right of the spacer and left of RECHECK KEYBOARD, v22 and ✕, while Input Monitoring (the light interface, checked strictly: Accessibility does not stand in for it here) or Accessibility (the macros' key tap and playing) is off. A click asks once and opens Privacy_ListenEvent or Privacy_Accessibility, the first missing. Re-read every 2 s, set only on change. At --background (the login agent) nothing is asked any more (it used to ask for Input Monitoring at every start). Built; the login agent restarted with launchctl kickstart -k (pid 581 → 39899). No window open, so not seen on screen.

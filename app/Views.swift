@@ -6,8 +6,10 @@
 // active bank bright. The key's colour is content, so a chosen key is shown by an amber ring only.
 
 import SwiftUI
+import IOKit.hid
 
-let VERSION = 21
+let VERSION = 22
+/// v22 (Marko, 30.10.2026: "If permissions are not set, it needs to have text in the top right"): PERMISSIONS.
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
 /// latest version"): the newest release, which .github/workflows/build.yml publishes from every push to main
@@ -209,6 +211,31 @@ struct Picker: View {
     }
 }
 
+/// v22: the permissions G815 Lights uses. Input Monitoring: the light interface shares the keyboard's USB interface,
+/// so opening it needs this one for real (TAKEOVER 3), not Accessibility in its place. Accessibility: the macros' key
+/// tap (it swallows trigger keys) and their playing (posted keys).
+enum Permissions {
+    static let needed = ["ListenEvent", "Accessibility"]
+    static func allowed(_ p: String) -> Bool {
+        switch p {
+        case "Accessibility": return AXIsProcessTrusted()
+        case "ListenEvent": return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+        default: return true
+        }
+    }
+    static var missing: [String] { needed.filter { !allowed($0) } }
+    /// the system's own request once (it puts the app in the list), then the page of the first one missing
+    static func openMissing() {
+        guard let p = missing.first else { return }
+        switch p {
+        case "Accessibility": _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
+        case "ListenEvent": _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        default: break
+        }
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_" + p)!)
+    }
+}
+
 /// v21: ✕ at the far upper-right corner closes its window or dialog only; the keeper stays ON (Marko, 19.10.2026:
 /// "please unify the position of the close button on every application. It's far upper right corner. There is X to
 /// close the dialog in every dialog, same.")
@@ -283,6 +310,8 @@ struct MainView: View {
     @ObservedObject var macros: Macros
     /// v15: MR opens the macros in place of the colours
     @State private var macroView = false
+    /// v22: every permission allowed; read every 2 s, set only when it changed (a half-typed field is never wiped)
+    @State private var permOK = Permissions.missing.isEmpty
     @State private var modeBefore = SelectMode.paint
     @State private var sel = Set<String>()
     @State private var hsv = HSV(h: 0, s: 0, v: 1)
@@ -368,12 +397,20 @@ struct MainView: View {
                 Text(store.connected ? "G815 \(store.serial)" : (store.error.isEmpty ? "looking for the keyboard" : store.error))
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
                 Spacer()
+                // v22: a permission missing, PERMISSIONS at the top right; a click opens its page in System Settings
+                if !permOK {
+                    Word(text: "PERMISSIONS", state: .amber) { Permissions.openMissing() }
+                        .help("A permission is missing: this opens its page in System Settings")
+                }
                 Word(text: store.checking ? "CHECKING…" : "RECHECK KEYBOARD", state: .amber) { store.recheck() }
                 if !updater.note.isEmpty { Word(text: updater.note, state: .amber, size: 11) { updater.act() } }
                 Link(destination: LATEST) { Text("v\(VERSION)").font(mono(11, .regular)).foregroundColor(.dimSand) }
                     .buttonStyle(.plain).focusable(false).help("download the latest version from GitHub")
                 CloseX { NSApp.keyWindow?.performClose(nil) }.help("close the window; the keyboard's keeper stays on")
                     .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
+            }
+            .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
+                let p = Permissions.missing.isEmpty; if p != permOK { permOK = p }
             }
 
             HStack(spacing: 4) {
