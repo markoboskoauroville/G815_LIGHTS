@@ -210,3 +210,9 @@ The first row of the main window is ON / OFF; OFF stops the engine and quits; cl
 A ✕ at the window's top-right corner, on the ON / OFF row: it closes the window only, the app stays ON. Every other dialog gets the same ✕ in its corner. The title bar and its traffic lights stay.
 
 **Status:** v21: ✕ (SF Symbol xmark, grey #7A8087, 28×28) at the far right of the first row, after v21; performClose, the keeper stays. The preset rename popover has the same ✕ in its corner. Seen by screenshot. Marko to try it (TESTS T6).
+
+## 30.10.2026: PERMISSIONS at the top right
+
+> please make this in every application that needs some permission. If permissions are not set, it needs to have text in the top right: "Permissions." Then I click on it, and it opens me directly to my settings page where I need to set permissions.
+
+**Status:** requested 30.10.2026; being built (MANTRA_MANIFEST swift-apps.md, last section).
