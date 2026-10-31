@@ -216,3 +216,13 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > please make this in every application that needs some permission. If permissions are not set, it needs to have text in the top right: "Permissions." Then I click on it, and it opens me directly to my settings page where I need to set permissions.
 
 **Status:** done in v22 (30.10.2026): PERMISSIONS (amber, the row's own Word) on the ON / OFF row, right of the spacer and left of RECHECK KEYBOARD, v22 and ✕, while Input Monitoring (the light interface, checked strictly: Accessibility does not stand in for it here) or Accessibility (the macros' key tap and playing) is off. A click asks once and opens Privacy_ListenEvent or Privacy_Accessibility, the first missing. Re-read every 2 s, set only on change. At --background (the login agent) nothing is asked any more (it used to ask for Input Monitoring at every start). Built; the login agent restarted with launchctl kickstart -k (pid 581 → 39899). No window open, so not seen on screen.
+
+## 31.10.2026
+
+> Please, in the same app, since it's now by the way, this is about the G815.
+> I want the G-keys to control something. The G-keys are the column of keys from G1 to G5. Each key should invoke a module of DaVinci Resolve, in the order in which they are shown on the user interface.
+> Pressing the number 1 will trigger number 1, then number 2, then number 3. If I change how many there are, it should also change what it triggers.
+
+> We built a Swift app to control the keyboard. You use that code.
+
+- While DaVinci Resolve is in front, G1–G5 open its pages in the order of its page bar (read live through Accessibility: hidden pages drop out, the keys follow); elsewhere the macros as before. **Status:** built v23 (app/ResolvePages.swift), running; Marko tests

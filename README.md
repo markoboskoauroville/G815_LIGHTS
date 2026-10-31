@@ -32,3 +32,5 @@ this one keyboard, nothing else.** Built 2.10.2026 because OpenRGB showed colour
 | `TAKEOVER.md` | putting it on a Mac: build, sign, permission, login agent |
 | `LESSONS.md` | what the keyboard really does, measured, and every trap that cost time |
 | `momentaryupdates.md` | his requests, word for word, with a status each |
+
+**v23 (31.10.2026): G1–G5 open DaVinci Resolve's pages.** Marko: *"Each key should invoke a module of DaVinci Resolve, in the order in which they are shown on the user interface ... If I change how many there are, it should also change what it triggers."* While Resolve is in front, G(n) presses the n-th button of Resolve's page bar, read live through Accessibility (Media, Photo, Cut, Edit, Fusion, Color, Fairlight, Deliver, ordered by x; a hidden page drops out). Elsewhere G1–G5 play their macros as before.
