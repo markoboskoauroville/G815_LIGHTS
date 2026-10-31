@@ -237,3 +237,7 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > So only one key should light at a time, please.
 
 - While Resolve is in front, the G-key of its current page lights on the keyboard, only one at a time; the others dark; back to the bank's colours when Resolve is not in front. **Status:** built v26 (Store.resolveG over paint, followResolve once a second, lit at once on a press); v27 logs the changes; seen on the Pixel camera: one G-key lit (Marko had hidden Media, Photo, Cut, Fusion: bar = Edit Color Fairlight Deliver, so Edit = G1)
+
+> I removed some pages. They are not missing. I removed them because this app needs to adapt to the number of pages, and now I have just selected the one I'm using.
+
+- Confirmed: the keys follow the page bar (now Edit, Color, Fairlight, Deliver = G1–G4; G5 has no page). **Status:** done
