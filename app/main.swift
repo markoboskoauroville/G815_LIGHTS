@@ -42,6 +42,7 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         MainActor.assumeIsolated {
             store = Store()
             store.start()
+            store.followResolve()            // v26: the G-key of Resolve's current page lit, alone
             // every bank in the keyboard brought in line with the Mac's; a bank already so is not written
             for i in 1...3 { store.writeBank(i) }
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in

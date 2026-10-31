@@ -230,3 +230,10 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > Yes, it does select those things, those workspaces, but it doesn't actually switch to them. I'm confused about what's going on. How is that possible?
 
 - Found: AXPress lights the page button but Resolve (Qt) does not switch; now resolve.OpenPage through the DaVinci Resolve Actions router (127.0.0.1:8940), the bar still read live for the order. **Status:** done v24 (OpenPage tested: cut, edit, about 0.1 s); Marko tests the keys
+
+- G-key press → a distributed notification to E16 for DaVinci Resolve (its window lights the key). **Status:** done v25
+
+> Yes, that's a great idea, because by default those G keys have no light when I press them.
+> So only one key should light at a time, please.
+
+- While Resolve is in front, the G-key of its current page lights on the keyboard, only one at a time; the others dark; back to the bank's colours when Resolve is not in front. **Status:** built v26 (Store.resolveG over paint, followResolve once a second, lit at once on a press); waiting for the camera to see it

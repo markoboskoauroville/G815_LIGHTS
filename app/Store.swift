@@ -173,6 +173,31 @@ final class Store: ObservableObject {
     private var bankTimer: Timer?
     private var chosenAt = Date.distantPast
 
+    /// v26: the G-key lit for Resolve's current page (0-4), nil while Resolve is not in front (the bank's colours)
+    var resolveG: Int?
+    private var resolveTimer: Timer?
+
+    /// once a second: Resolve in front → its current page's G-key lit, alone; Resolve gone → the G-keys' own colours back
+    func followResolve() {
+        resolveTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            if !ResolvePages.resolveInFront {
+                if self.resolveG != nil { self.resolveG = nil; self.paint(KeyCodes.gKeys) }
+                return
+            }
+            DispatchQueue.global(qos: .utility).async {
+                let idx = ResolvePages.currentIndex()
+                DispatchQueue.main.async { self.setResolveG(idx) }
+            }
+        }
+    }
+
+    func setResolveG(_ idx: Int?) {
+        let v = idx.map { $0 < 5 ? $0 : -1 } ?? -1            // a page past G5: no G-key lit, all dark
+        guard resolveG != v else { return }
+        resolveG = v; paint(KeyCodes.gKeys)
+    }
+
     init() {
         let url = Bundle.main.url(forResource: "layout", withExtension: "json")!
         layout = try! JSONDecoder().decode(KeyLayout.self, from: Data(contentsOf: url))
@@ -222,7 +247,12 @@ final class Store: ObservableObject {
                 self.paintQueued = false
                 return ids.compactMap { id in
                     guard let i = UInt8(id, radix: 16) else { return nil }
-                    let c = self.key(id).sent
+                    var c = self.key(id).sent
+                    // v26 (Marko, 31.10.2026: "by default those G keys have no light when I press them. So only one key should
+                    // light at a time"): while Resolve is in front, the G-key of its current page orange, the other G-keys dark
+                    if let lit = self.resolveG, let g = KeyCodes.gKeys.firstIndex(of: id) {
+                        c = g == lit ? (255, 110, 0) : (0, 0, 0)
+                    }
                     return (i, c.0, c.1, c.2)
                 }
             }

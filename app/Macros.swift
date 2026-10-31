@@ -235,6 +235,7 @@ final class Macros: ObservableObject {
         for i in 0..<5 where pressed & (1 << i) != 0 {
             // 31.10.2026: DaVinci Resolve in front: G1–G5 open its pages in the page bar's order (ResolvePages.swift)
             if case .idle = rec, ResolvePages.resolveInFront {
+                store.setResolveG(i)                         // v26: lit at once, before Resolve answers
                 DispatchQueue.global(qos: .userInitiated).async { let said = ResolvePages.open(i); DispatchQueue.main.async { self.say(said) } }
                 continue
             }
