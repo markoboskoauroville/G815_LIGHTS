@@ -236,4 +236,4 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > Yes, that's a great idea, because by default those G keys have no light when I press them.
 > So only one key should light at a time, please.
 
-- While Resolve is in front, the G-key of its current page lights on the keyboard, only one at a time; the others dark; back to the bank's colours when Resolve is not in front. **Status:** built v26 (Store.resolveG over paint, followResolve once a second, lit at once on a press); waiting for the camera to see it
+- While Resolve is in front, the G-key of its current page lights on the keyboard, only one at a time; the others dark; back to the bank's colours when Resolve is not in front. **Status:** built v26 (Store.resolveG over paint, followResolve once a second, lit at once on a press); v27 logs the changes; seen on the Pixel camera: one G-key lit (Marko had hidden Media, Photo, Cut, Fusion: bar = Edit Color Fairlight Deliver, so Edit = G1)

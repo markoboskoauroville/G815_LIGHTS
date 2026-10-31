@@ -182,7 +182,7 @@ final class Store: ObservableObject {
         resolveTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             if !ResolvePages.resolveInFront {
-                if self.resolveG != nil { self.resolveG = nil; self.paint(KeyCodes.gKeys) }
+                if self.resolveG != nil { self.resolveG = nil; self.paint(KeyCodes.gKeys); Store.log("resolve: not in front, G-keys back to the bank") }
                 return
             }
             DispatchQueue.global(qos: .utility).async {
@@ -196,6 +196,7 @@ final class Store: ObservableObject {
         let v = idx.map { $0 < 5 ? $0 : -1 } ?? -1            // a page past G5: no G-key lit, all dark
         guard resolveG != v else { return }
         resolveG = v; paint(KeyCodes.gKeys)
+        Store.log("resolve: page index \(idx.map(String.init) ?? "?") → G\(v + 1) lit")
     }
 
     init() {

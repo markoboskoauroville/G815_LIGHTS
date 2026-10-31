@@ -66,7 +66,8 @@ enum ResolvePages {
         }.resume()
         _ = done.wait(timeout: .now() + 3)
         guard let c = cur else { return nil }
-        return pageBar().firstIndex { $0.name.lowercased() == c }
+        let bar = pageBar()
+        return bar.firstIndex { $0.name.lowercased() == c }
     }
 
     /// resolve.OpenPage(page) through the router (POST 127.0.0.1:8940/run, as E16 for DaVinci Resolve does); true when switched
