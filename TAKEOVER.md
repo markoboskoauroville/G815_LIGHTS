@@ -62,3 +62,6 @@ A backup of the factory memory as found on 2.10.2026 is in `~/.g815/backup-2.10.
 - The wake-from-sleep repaint has not been watched (it is the same `paintAll` as a replug).
 - Host mode across a sleep and a real boot (the app takes it over again at every open; not watched through a night).
 - The G HUB "user-stored lighting" slots (Brightness+8/+9 in the manual) were not explored.
+
+## 31.10.2026, v23–v27: G1–G5 for DaVinci Resolve
+app/ResolvePages.swift: Resolve in front → G(n) = the n-th button of its page bar, read live through AX (hidden pages drop out); the switch is resolve.OpenPage through the router (127.0.0.1:8940; AXPress only lights the button). Store.resolveG over paint: the current page's G-key orange, the other G-keys dark; followResolve once a second; the bank's colours back when Resolve leaves the front. Each press → distributed notification community.auroville.g815.gkey (E16 for DaVinci Resolve lights it). Runs from build/ as a login agent: `launchctl kickstart -k gui/$(id -u)/community.auroville.g815lights` after a build. Checked on the Pixel camera 31.10.2026.
