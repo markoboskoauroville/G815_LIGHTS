@@ -226,3 +226,7 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > We built a Swift app to control the keyboard. You use that code.
 
 - While DaVinci Resolve is in front, G1–G5 open its pages in the order of its page bar (read live through Accessibility: hidden pages drop out, the keys follow); elsewhere the macros as before. **Status:** built v23 (app/ResolvePages.swift), running; Marko tests
+
+> Yes, it does select those things, those workspaces, but it doesn't actually switch to them. I'm confused about what's going on. How is that possible?
+
+- Found: AXPress lights the page button but Resolve (Qt) does not switch; now resolve.OpenPage through the DaVinci Resolve Actions router (127.0.0.1:8940), the bar still read live for the order. **Status:** done v24 (OpenPage tested: cut, edit, about 0.1 s); Marko tests the keys

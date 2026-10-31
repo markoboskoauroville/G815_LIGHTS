@@ -40,7 +40,27 @@ enum ResolvePages {
     static func open(_ n: Int) -> String {
         let bar = pageBar()
         guard n < bar.count else { return "G\(n + 1): Resolve shows only \(bar.count) pages" }
-        AXUIElementPerformAction(bar[n].el, kAXPressAction as CFString)
-        return "G\(n + 1) → Resolve \(bar[n].name.uppercased()) page"
+        // v24 (Marko: "it does select those things ... but it doesn't actually switch to them"): AXPress only lights the
+        // button in Resolve's Qt page bar; Resolve's own resolve.OpenPage switches, through the DaVinci Resolve Actions router
+        let page = bar[n].name.lowercased()
+        if openPage(page) { return "G\(n + 1) → Resolve \(bar[n].name.uppercased()) page" }
+        AXUIElementPerformAction(bar[n].el, kAXPressAction as CFString)          // the router is not running: the old way
+        return "G\(n + 1) → \(bar[n].name.uppercased()) (router off: only lit)"
+    }
+
+    /// resolve.OpenPage(page) through the router (POST 127.0.0.1:8940/run, as E16 for DaVinci Resolve does); true when switched
+    static func openPage(_ page: String) -> Bool {
+        var req = URLRequest(url: URL(string: "http://127.0.0.1:8940/run")!)
+        req.httpMethod = "POST"; req.timeoutInterval = 3
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["who": "g815", "code": "result = resolve.OpenPage('\(page)')", "timeout": 3])
+        var ok = false
+        let done = DispatchSemaphore(value: 0)
+        URLSession.shared.dataTask(with: req) { d, _, _ in
+            if let d, let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] { ok = (j["ok"] as? Bool ?? false) && (j["result"] as? Bool ?? false) }
+            done.signal()
+        }.resume()
+        _ = done.wait(timeout: .now() + 4)
+        return ok
     }
 }

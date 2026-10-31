@@ -145,3 +145,8 @@ steps); M1–M3 are not among the per-key indexes 0x8081 accepts, and MR's light
 v20 gives what exists: M KEYS LIGHT, OFF or ON, kept in settings.json (`mLight`) and sent with every host-mode set-up;
 lit, an M key shines at the keyboard's brightness. Not measured with the camera on 9.10.2026 (no camera on the
 keyboard that morning): whether 0x8040 really dims the M lights is still to be seen.
+
+## 31.10.2026: an AX press does not switch Resolve's page
+G1–G5 v23 pressed Resolve's page-bar buttons with AXPress: the button lit, the page stayed (Qt takes the accessibility
+action as a state change, not a click). v24 reads the bar through AX only for the order and switches with Resolve's own
+`resolve.OpenPage(name)` through the DaVinci Resolve Actions router (POST 127.0.0.1:8940/run), about 0.1 s.
