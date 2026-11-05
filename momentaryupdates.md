@@ -251,3 +251,4 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 "Please in one in my application g h one. And five for each key make user interface to change its function. So I can click on any key with right mouse button and then can I can assign any other key. So it's replacing the keys."
 Then: "my app is logitech keyboard controller on this device g815 written in swift"
 **Status:** saved first.
+**Status (5.11.2026, ~10:00):** v28 right-click on any key in the drawing: REPLACE WITH THE NEXT KEY I PRESS, REPLACE WITH › (letters, digits, F keys, arrows and page, keypad, other), BACK TO; per bank, G1–G5 too; the cap shows →NEW. v29: the updater installs GitHub's release (signed Mantra Apps) instead of build.sh on the Mac. v29 installed from the release, running, key tap on. Marko tests the menu.
