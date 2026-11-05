@@ -1,11 +1,12 @@
 // Update.swift — the app keeps itself up to date (Marko, 8.10.2026: "even if it's possible that this app auto
 // updates when a new version is detected"; of the ways offered he chose: rebuild on this Mac).
 //
-// Not a download: GitHub can only sign ad hoc, and an ad hoc app loses Input Monitoring (LESSONS 6). So the app
-// looks in the repo it was built from (build/G815 Lights.app sits in it): two minutes after start, every 6 hours and
-// when the window is opened (at most once a minute):
-// `git fetch origin main`; if VERSION there is higher than its own, and the repo is on main with nothing changed,
-// `git pull --ff-only` and ./build.sh, signed "Mantra Apps" as always. The new build waits until the window is
+// v29 (Marko, 5.11.2026: "always use GitHub from now on to compile"): never ./build.sh on the Mac. The app looks in the
+// repo it runs from (build/G815 Lights.app sits in it): two minutes after start, every 6 hours and when the window is
+// opened (at most once a minute): `git fetch origin main`; if VERSION there is higher than its own, and the repo is on
+// main with nothing changed, `git pull --ff-only`, then GitHub's release v<N> (G815-Lights.zip, built by the workflow)
+// is downloaded, unzipped over build/ and signed "Mantra Apps" here, so Input Monitoring stays (LESSONS 6: an ad hoc
+// signature alone loses it). No release yet (the workflow still running): tried again at the next check. The new build waits until the window is
 // closed and the keyboard has no job running, then launchd starts it (kickstart of the login agent). A click on the
 // amber note top right restarts at once, and the window comes back. Everything goes into ~/.g815/log.txt.
 
@@ -89,9 +90,19 @@ final class Updater: ObservableObject {
         Store.log("update: v\(VERSION) → v\(v): pull and build")
         let pull = sh(repo, "git", "pull", "--ff-only", "--quiet", "origin", "main")
         guard pull.0 == 0 else { Store.log("update: git pull failed: \(pull.1)"); return ("v\(v) DID NOT PULL · SEE LOG", 0, v) }
-        let build = sh(repo, "/bin/sh", "./build.sh")
-        guard build.0 == 0 else { Store.log("update: build failed: \(build.1)"); return ("v\(v) DID NOT BUILD · SEE LOG", 0, v) }
-        Store.log("update: v\(v) built, restarting when the window is closed")
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("g815-v\(v)")
+        try? FileManager.default.removeItem(at: tmp)
+        let dl = sh(repo, FileManager.default.fileExists(atPath: "/opt/homebrew/bin/gh") ? "/opt/homebrew/bin/gh" : "/usr/local/bin/gh", "release", "download", "v\(v)", "--pattern", "G815-Lights.zip", "--dir", tmp.path)
+        guard dl.0 == 0 else { Store.log("update: release v\(v) not there yet: \(dl.1)"); return ("v\(v) ON GITHUB · BUILDING", 0, 0) }
+        let app = repo.appendingPathComponent("build/G815 Lights.app")
+        let unzip = sh(tmp, "/usr/bin/ditto", "-x", "-k", "G815-Lights.zip", ".")
+        guard unzip.0 == 0 else { Store.log("update: unzip failed: \(unzip.1)"); return ("v\(v) DID NOT UNZIP · SEE LOG", 0, v) }
+        try? FileManager.default.removeItem(at: app)
+        do { try FileManager.default.copyItem(at: tmp.appendingPathComponent("G815 Lights.app"), to: app) }
+        catch { Store.log("update: copy failed: \(error)"); return ("v\(v) DID NOT INSTALL · SEE LOG", 0, v) }
+        let sign = sh(repo, "codesign", "--force", "-s", "Mantra Apps", app.path)
+        guard sign.0 == 0 else { Store.log("update: signing failed: \(sign.1)"); return ("v\(v) NOT SIGNED · SEE LOG", 0, v) }
+        Store.log("update: v\(v) from GitHub's release, signed Mantra Apps, restarting when the window is closed")
         return ("v\(v) READY · RESTART", v, 0)
     }
 
