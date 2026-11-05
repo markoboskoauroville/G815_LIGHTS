@@ -245,3 +245,9 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 ## 5.11.2026
 
 "for a star app g815 and star app itswelf bring back old icons" ... "fore levate media same"
+
+## 5.11.2026
+
+"Please in one in my application g h one. And five for each key make user interface to change its function. So I can click on any key with right mouse button and then can I can assign any other key. So it's replacing the keys."
+Then: "my app is logitech keyboard controller on this device g815 written in swift"
+**Status:** saved first.
