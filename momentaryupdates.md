@@ -241,3 +241,7 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 > I removed some pages. They are not missing. I removed them because this app needs to adapt to the number of pages, and now I have just selected the one I'm using.
 
 - Confirmed: the keys follow the page bar (now Edit, Color, Fairlight, Deliver = G1–G4; G5 has no page). **Status:** done
+
+## 5.11.2026
+
+"for a star app g815 and star app itswelf bring back old icons" ... "fore levate media same"
