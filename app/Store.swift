@@ -30,6 +30,9 @@ struct Bank: Codable {
     var keys: [String: KeyLight] = [:]
     /// v15: which key plays which macro in this bank (key id → Macro.uid), as the colours: one set per M
     var macros: [String: String] = [:]
+    /// v28 (Marko, 5.11.2026: "click on any key with right mouse button and then I can assign any other key. So it's
+    /// replacing the keys"): key id → the Mac key code it types instead, one set per M, as the macros
+    var remaps: [String: Int] = [:]
 }
 extension Bank {
     init(from d: Decoder) throws {          // banks saved before v15 have no macros
@@ -38,6 +41,7 @@ extension Bank {
         base = try k.decodeIfPresent(KeyLight.self, forKey: .base) ?? KeyLight(c: "ffffff", b: 100)
         keys = try k.decodeIfPresent([String: KeyLight].self, forKey: .keys) ?? [:]
         macros = try k.decodeIfPresent([String: String].self, forKey: .macros) ?? [:]
+        remaps = try k.decodeIfPresent([String: Int].self, forKey: .remaps) ?? [:]
     }
 }
 

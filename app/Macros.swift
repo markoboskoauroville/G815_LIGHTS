@@ -128,6 +128,8 @@ final class Macros: ObservableObject {
     /// the last thing that happened, said in the window
     @Published var last = ""
     @Published var keepDelays = true
+    /// v28: the key waiting for its replacement ("REPLACE WITH THE NEXT KEY I PRESS")
+    @Published var replacing: String?
 
     unowned let store: Store
     /// the Mac's key code → the keyboard's key id; the ISO key left of 1 comes as 0x0A or 0x32
@@ -207,6 +209,10 @@ final class Macros: ObservableObject {
         switch type {
         case .keyDown:
             let again = ev.getIntegerValueField(.keyboardEventAutorepeat) != 0
+            if let target = replacing {                  // v28: the next key pressed becomes the replacement
+                guard KeyCodes.modifier[code] == nil, codeToId[code] != nil else { return false }
+                swallowed.insert(code); remap(target, to: code); replacing = nil; return true
+            }
             if rec == .waitTrigger {
                 guard let id = codeToId[code] else { return false }
                 swallowed.insert(code); trigger(id); return true
@@ -214,9 +220,11 @@ final class Macros: ObservableObject {
             if case .recording = rec { if !again { record(code, true) }; return false }
             if swallowed.contains(code) { return true }
             if let id = codeToId[code], let m = macro(for: id) { swallowed.insert(code); run(m); return true }
+            if let id = codeToId[code], let to = store.bank.remaps[id] { Macros.send(to, true, ev.flags, again); return true }
             return false
         case .keyUp:
             if swallowed.remove(code) != nil { return true }
+            if let id = codeToId[code], let to = store.bank.remaps[id] { Macros.send(to, false, ev.flags, false); return true }
             if case .recording = rec { record(code, false) }
             return false
         case .flagsChanged:
@@ -262,7 +270,10 @@ final class Macros: ObservableObject {
         case .waitTrigger: trigger(id)
         case .recording: break                      // G keys are not recorded
         case .idle:
-            if let m = macro(for: id) { run(m) } else { say("\(name(id)) has no macro in M\(store.s.active)") }
+            if let target = replacing { replacing = nil; say("\(name(id)) cannot be the new key: press a normal key"); _ = target; return }
+            if let m = macro(for: id) { run(m) }
+            else if let to = store.bank.remaps[id] { Macros.send(to, true, [], false); Macros.send(to, false, [], false) }
+            else { say("\(name(id)) has no macro in M\(store.s.active)") }
         }
     }
 
@@ -318,6 +329,54 @@ final class Macros: ObservableObject {
             say("recorded \(got.filter { $0.kind == "key" && $0.down }.count) keys")
             into = nil
         }
+    }
+
+    // ------------------------------------------------------------ replacing keys (v28, Marko 5.11.2026)
+    /// every key except the modifiers (CTRL SHIFT ALT ⌘), the media keys and ☼ can be replaced; G1–G5 too
+    func canReplace(_ id: String) -> Bool { canTrigger(id) }
+
+    func replaceWithNext(_ id: String) {
+        guard AXIsProcessTrusted() else { askPermission(); say("ACCESSIBILITY IS OFF: allow it, then try again"); return }
+        replacing = id
+        say("press the key \(name(id)) should type in M\(store.s.active)")
+    }
+
+    /// nil = back to itself; a key replaced by itself is the same as back
+    func remap(_ id: String, to code: Int?) {
+        var b = store.s.memories[store.s.active - 1]
+        if let code, KeyCodes.code(forKey: id) != code { b.remaps[id] = code } else { b.remaps[id] = nil }
+        store.s.memories[store.s.active - 1] = b
+        store.save(); store.syncGKeys()
+        say(code.map { "\(name(id)) now types \(codeName($0)) in M\(store.s.active)" } ?? "\(name(id)) types itself again")
+        Store.log("keys: \(id) → \(code.map { String($0) } ?? "itself") in M\(store.s.active)")
+    }
+
+    /// the keys offered in the menu, by group, as Mac key codes (only keys this keyboard has)
+    var targetGroups: [(String, [Int])] {
+        var groups: [String: [Int]] = [:]
+        for (code, id) in codeToId where KeyCodes.modifier[code] == nil && code != 0x0A {
+            let n = name(id)
+            let g: String
+            if n.count == 1, n.first!.isLetter { g = "LETTERS" }
+            else if n.count == 1, n.first!.isNumber { g = "DIGITS" }
+            else if n.hasPrefix("F"), Int(n.dropFirst()) != nil { g = "F KEYS" }
+            else if n.hasPrefix("NUM") { g = "KEYPAD" }
+            else if ["UP", "DOWN", "LEFT", "RIGHT", "HOME", "END", "PG UP", "PG DN", "PGUP", "PGDN", "INS", "DEL"].contains(n) { g = "ARROWS AND PAGE" }
+            else { g = "OTHER KEYS" }
+            groups[g, default: []].append(code)
+        }
+        let order = ["LETTERS", "DIGITS", "F KEYS", "ARROWS AND PAGE", "KEYPAD", "OTHER KEYS"]
+        return order.compactMap { g in groups[g].map { (g, $0.sorted { codeName($0) < codeName($1) }) } }
+    }
+
+    /// one key, down or up, marked as ours so the tap lets it through; the modifiers held stay on it
+    nonisolated static func send(_ code: Int, _ down: Bool, _ flags: CGEventFlags, _ again: Bool) {
+        let src = CGEventSource(stateID: .hidSystemState)
+        guard let e = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(code), keyDown: down) else { return }
+        e.flags = flags.intersection([.maskShift, .maskControl, .maskAlternate, .maskCommand, .maskSecondaryFn])
+        if again { e.setIntegerValueField(.keyboardEventAutorepeat, value: 1) }
+        e.setIntegerValueField(.eventSourceUserData, value: KeyCodes.magic)
+        e.post(tap: .cgSessionEventTap)
     }
 
     // ------------------------------------------------------------ playing

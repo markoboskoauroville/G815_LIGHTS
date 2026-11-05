@@ -8,7 +8,7 @@
 import SwiftUI
 import IOKit.hid
 
-let VERSION = 27
+let VERSION = 28
 /// v22 (Marko, 30.10.2026: "If permissions are not set, it needs to have text in the top right"): PERMISSIONS.
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
@@ -157,8 +157,40 @@ struct Board: View {
                 Circle().fill(Color.sand).frame(width: 5, height: 5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(5)
             }
+            // v28: a replaced key shows what it types now, small and amber at the bottom of the cap
+            if let to = store.bank.remaps[k.id] {
+                Text("→" + store.macros.codeName(to))
+                    .font(mono(max(6, u * 0.15))).foregroundColor(.amber)
+                    .lineLimit(1).minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, 2)
+            }
+            if store.macros.replacing == k.id { RoundedRectangle(cornerRadius: 5).strokeBorder(Color.amber, style: StrokeStyle(lineWidth: 2, dash: [4, 3])) }
         }
         .frame(width: k.w * u - 4, height: k.h * u - 4)
+        .contextMenu { replaceMenu(k) }
+    }
+
+    /// v28: right click on a key: replace it with another key, in the bank now chosen
+    @ViewBuilder private func replaceMenu(_ k: KeyCap) -> some View {
+        let m = store.macros, name = m.name(k.id)
+        if m.canReplace(k.id) {
+            Text("\(name) in M\(store.s.active)")
+            Button("REPLACE WITH THE NEXT KEY I PRESS") { m.replaceWithNext(k.id) }
+            Menu("REPLACE WITH") {
+                ForEach(m.targetGroups, id: \.0) { g in
+                    Menu(g.0) {
+                        ForEach(g.1, id: \.self) { code in
+                            Button(m.codeName(code)) { m.remap(k.id, to: code) }
+                        }
+                    }
+                }
+            }
+            if store.bank.remaps[k.id] != nil {
+                Button("BACK TO \(name)") { m.remap(k.id, to: nil) }
+            }
+        } else {
+            Text("\(name) cannot be replaced (modifiers, media keys and ☼ stay as they are)")
+        }
     }
 
     private func bankCap(_ b: BankCap, _ u: Double) -> some View {
