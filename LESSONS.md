@@ -150,3 +150,8 @@ keyboard that morning): whether 0x8040 really dims the M lights is still to be s
 G1–G5 v23 pressed Resolve's page-bar buttons with AXPress: the button lit, the page stayed (Qt takes the accessibility
 action as a state change, not a click). v24 reads the bar through AX only for the order and switches with Resolve's own
 `resolve.OpenPage(name)` through the DaVinci Resolve Actions router (POST 127.0.0.1:8940/run), about 0.1 s.
+
+## 5.11.2026: the self-updater compiled on the Mac
+The updater ran `./build.sh` on the Mac whenever main had a higher VERSION, against the 5.11.2026 rule (compile only on
+GitHub). v29 downloads the release and signs it "Mantra Apps" here; the designated requirement (identifier + Mantra Apps
+leaf) stays the same, so Input Monitoring and Accessibility survive (checked: "key tap on" after the update).
