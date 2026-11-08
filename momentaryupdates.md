@@ -258,3 +258,7 @@ Then: "my app is logitech keyboard controller on this device g815 written in swi
 "You need to access this app, which is now riding the thing, and through API calls control it."
 **Status:** saved first. NIGHT: the darken app tells G815 Lights over a distributed notification; G815 Lights paints.
 **Status (8.11.2026, 22:11):** v30 installed; API tested with the Pixel camera: on → dark, ⌃ ⌘ Alt dimly lit, stays dark; off → the bank back. Darken app v9 sends it.
+
+## 8.11.2026, 22:20
+"Yes, it works. Only thing is that the color is changing to white. Please, F1 is red. Control and Command are yellow. Alt is yellow."
+**Status:** saved first: NIGHT keeps each key's own colour, only dimmed.

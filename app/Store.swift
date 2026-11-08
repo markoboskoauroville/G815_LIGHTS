@@ -184,10 +184,20 @@ final class Store: ObservableObject {
     /// brightness ... when I'm lighting the screen up, the keyboard comes back"). The API: the distributed notification
     /// `community.auroville.g815lights.night` with userInfo ["on": "1"] or ["on": "0"] (Screen Brightness Darkening the
     /// Screen sends it with ⌃⌥⌘F1). While on, every key, G key, logo and M light is dark except ⌃ ⌥ ⌘ (both sides) and F1,
-    /// grey 50 of 255: the lowest a key surely shows (keySteps: 0–44 shows nothing). Nothing is saved; off paints the bank.
+    /// each in its own colour, dimmed (v31). Nothing is saved; off paints the bank.
     @Published var night = false
     static let nightKeys: Set<UInt8> = [0x37, 0x68, 0x6A, 0x6B, 0x6C, 0x6E, 0x6F]
-    static let nightGrey: UInt8 = 50
+    static let nightLevel = 64.0      // the strongest channel; 0–44 shows nothing, so the weaker channels keep their share
+    static func dim(_ hex: String) -> (UInt8, UInt8, UInt8) {
+        let v = UInt32(hex, radix: 16) ?? 0xFFFFFF
+        let r = Double(v >> 16 & 0xFF), g = Double(v >> 8 & 0xFF), b = Double(v & 0xFF), m = max(r, g, b, 1)
+        // a channel that makes the colour (a third of the strongest or more) must stay at 46 or above, or the key shows
+        // another colour (MEASURED 8.10.2026: 0–44 shows nothing); ff8a2a goes to 85 instead of 64, still its lowest
+        let weakest = [r, g, b].map { $0 / m }.filter { $0 >= 0.33 }.min() ?? 1
+        let level = min(255, max(nightLevel, 46 / weakest))
+        func ch(_ x: Double) -> UInt8 { UInt8((x / m * level).rounded()) }
+        return (ch(r), ch(g), ch(b))
+    }
     func setNight(_ on: Bool) {
         guard night != on else { return }
         night = on
@@ -278,8 +288,9 @@ final class Store: ObservableObject {
                         c = g == lit ? (255, 110, 0) : (0, 0, 0)
                     }
                     if self.night {
-                        let g = Store.nightGrey
-                        c = Store.nightKeys.contains(i) ? (g, g, g) : (0, 0, 0)
+                        // v31 (Marko, 8.11.2026: "the color is changing to white. Please, F1 is red. Control and Command are
+                        // yellow"): the key's own colour, dimmed so its strongest channel is nightLevel
+                        c = Store.nightKeys.contains(i) ? Store.dim(self.key(id).c) : (0, 0, 0)
                     }
                     return (i, c.0, c.1, c.2)
                 }
