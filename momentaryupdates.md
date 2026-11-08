@@ -262,3 +262,4 @@ Then: "my app is logitech keyboard controller on this device g815 written in swi
 ## 8.11.2026, 22:20
 "Yes, it works. Only thing is that the color is changing to white. Please, F1 is red. Control and Command are yellow. Alt is yellow."
 **Status:** saved first: NIGHT keeps each key's own colour, only dimmed.
+**Status (8.11.2026, 22:16):** v31 built (run 42524102030 green), installed; camera: F1 dim red, Ctrl/⌘/Alt dim warm yellow, the rest dark; off brings the bank back.
