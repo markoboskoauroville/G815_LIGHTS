@@ -36,3 +36,8 @@ this one keyboard, nothing else.** Built 2.10.2026 because OpenRGB showed colour
 **v23 (31.10.2026): G1–G5 open DaVinci Resolve's pages.** Marko: *"Each key should invoke a module of DaVinci Resolve, in the order in which they are shown on the user interface ... If I change how many there are, it should also change what it triggers."* While Resolve is in front, G(n) presses the n-th button of Resolve's page bar, read live through Accessibility (Media, Photo, Cut, Edit, Fusion, Color, Fairlight, Deliver, ordered by x; a hidden page drops out). Elsewhere G1–G5 play their macros as before.
 
 **v25–v26 (31.10.2026): the G-keys light for Resolve.** Marko: *"by default those G keys have no light when I press them. So only one key should light at a time."* While Resolve is in front, the G-key of its current page (resolve.GetCurrentPage, once a second; at once on a press) is orange and the other G-keys are dark; when Resolve is not in front the bank's own colours come back. Every press is also told to E16 for DaVinci Resolve (distributed notification `community.auroville.g815.gkey`), whose window lights that key.
+
+**v30 (8.11.2026): NIGHT, an API for other apps.** Distributed notification `community.auroville.g815lights.night`, userInfo
+`["on": "1"]`: every light dark except ⌃ ⌥ ⌘ (both sides) and F1 at grey 50 (the lowest a key surely shows); `["on": "0"]`:
+the bank back. Screen Brightness Darkening the Screen (Mantra) v9 sends it with ⌃⌥⌘F1. Only G815 Lights writes to the
+keyboard: an app writing to it directly is painted over within seconds (seen 8.11.2026).

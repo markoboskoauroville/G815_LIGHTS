@@ -257,3 +257,4 @@ Then: "my app is logitech keyboard controller on this device g815 written in swi
 "Shortcut key for darkening the screen is Control Command Alt F1. When I press this button, and you need to detect the actual keys that are going down to darken, you need to darken all the lights on my keyboard, leaving Control Command out and F1 on the lowest brightness, just so I can press it. Then, when I'm lighting the screen up, the keyboard comes back to the previous brightness."
 "You need to access this app, which is now riding the thing, and through API calls control it."
 **Status:** saved first. NIGHT: the darken app tells G815 Lights over a distributed notification; G815 Lights paints.
+**Status (8.11.2026, 22:11):** v30 installed; API tested with the Pixel camera: on → dark, ⌃ ⌘ Alt dimly lit, stays dark; off → the bank back. Darken app v9 sends it.
