@@ -8,7 +8,7 @@
 import SwiftUI
 import IOKit.hid
 
-let VERSION = 29
+let VERSION = 30
 /// v22 (Marko, 30.10.2026: "If permissions are not set, it needs to have text in the top right"): PERMISSIONS.
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the

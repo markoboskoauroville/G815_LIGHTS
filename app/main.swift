@@ -32,6 +32,11 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         DistributedNotificationCenter.default().addObserver(forName: .init("community.auroville.g815lights.show"), object: nil, queue: .main) { [weak self] _ in
             self?.show()
         }
+        // v30 NIGHT, the API: ["on": "1"] dark but ⌃⌥⌘F1, ["on": "0"] the bank back (Store.setNight)
+        DistributedNotificationCenter.default().addObserver(forName: .init("community.auroville.g815lights.night"), object: nil, queue: .main) { [weak self] n in
+            let on = (n.userInfo?["on"] as? String) == "1"
+            MainActor.assumeIsolated { self?.store?.setNight(on) }
+        }
         // the G815's light interface sits beside its keys, so macOS asks for Input Monitoring; this shows
         // the system's own question once (System Settings > Privacy & Security > Input Monitoring)
         // v22: never at login (--background, --login): the window's PERMISSIONS waits for him (swift-apps.md)

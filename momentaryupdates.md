@@ -252,3 +252,8 @@ A ✕ at the window's top-right corner, on the ON / OFF row: it closes the windo
 Then: "my app is logitech keyboard controller on this device g815 written in swift"
 **Status:** saved first.
 **Status (5.11.2026, ~10:00):** v28 right-click on any key in the drawing: REPLACE WITH THE NEXT KEY I PRESS, REPLACE WITH › (letters, digits, F keys, arrows and page, keypad, other), BACK TO; per bank, G1–G5 too; the cap shows →NEW. v29: the updater installs GitHub's release (signed Mantra Apps) instead of build.sh on the Mac. v29 installed from the release, running, key tap on. Marko tests the menu.
+
+## 8.11.2026, 22:10 (hub session)
+"Shortcut key for darkening the screen is Control Command Alt F1. When I press this button, and you need to detect the actual keys that are going down to darken, you need to darken all the lights on my keyboard, leaving Control Command out and F1 on the lowest brightness, just so I can press it. Then, when I'm lighting the screen up, the keyboard comes back to the previous brightness."
+"You need to access this app, which is now riding the thing, and through API calls control it."
+**Status:** saved first. NIGHT: the darken app tells G815 Lights over a distributed notification; G815 Lights paints.

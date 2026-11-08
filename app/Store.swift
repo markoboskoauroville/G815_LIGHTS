@@ -179,6 +179,25 @@ final class Store: ObservableObject {
 
     /// v26: the G-key lit for Resolve's current page (0-4), nil while Resolve is not in front (the bank's colours)
     var resolveG: Int?
+
+    /// v30 NIGHT (Marko, 8.11.2026: "darken all the lights on my keyboard, leaving Control Command out and F1 on the lowest
+    /// brightness ... when I'm lighting the screen up, the keyboard comes back"). The API: the distributed notification
+    /// `community.auroville.g815lights.night` with userInfo ["on": "1"] or ["on": "0"] (Screen Brightness Darkening the
+    /// Screen sends it with ⌃⌥⌘F1). While on, every key, G key, logo and M light is dark except ⌃ ⌥ ⌘ (both sides) and F1,
+    /// grey 50 of 255: the lowest a key surely shows (keySteps: 0–44 shows nothing). Nothing is saved; off paints the bank.
+    @Published var night = false
+    static let nightKeys: Set<UInt8> = [0x37, 0x68, 0x6A, 0x6B, 0x6C, 0x6E, 0x6F]
+    static let nightGrey: UInt8 = 50
+    func setNight(_ on: Bool) {
+        guard night != on else { return }
+        night = on
+        Store.log("night " + (on ? "on: only ⌃⌥⌘F1 lit, lowest" : "off: the bank back"))
+        paintAll()
+        let mask = UInt8(!on && s.mLight ? 1 << (s.active - 1) : 0)
+        wire.run { kb in
+            if let mk = (try? kb.index(of: 0x8020)) ?? nil { _ = try kb.call(mk, 1, [mask]) }
+        }
+    }
     private var resolveTimer: Timer?
 
     /// once a second: Resolve in front → its current page's G-key lit, alone; Resolve gone → the G-keys' own colours back
@@ -258,6 +277,10 @@ final class Store: ObservableObject {
                     if let lit = self.resolveG, let g = KeyCodes.gKeys.firstIndex(of: id) {
                         c = g == lit ? (255, 110, 0) : (0, 0, 0)
                     }
+                    if self.night {
+                        let g = Store.nightGrey
+                        c = Store.nightKeys.contains(i) ? (g, g, g) : (0, 0, 0)
+                    }
                     return (i, c.0, c.1, c.2)
                 }
             }
@@ -312,7 +335,7 @@ final class Store: ObservableObject {
     func syncGKeys(force: Bool = false) {
         guard force || gSoft != true || gIdx == nil else { return }
         gSoft = nil
-        let mMask = UInt8(s.mLight ? 1 << (s.active - 1) : 0)      // v20: M KEYS LIGHT off leaves them dark
+        let mMask = UInt8(s.mLight && !night ? 1 << (s.active - 1) : 0)      // v20: M KEYS LIGHT off leaves them dark
         wire.run { [weak self] kb in
             let g = (try? kb.index(of: 0x8010)) ?? nil, r = (try? kb.index(of: 0x8030)) ?? nil
             let mk = (try? kb.index(of: 0x8020)) ?? nil
