@@ -199,9 +199,11 @@ final class Store: ObservableObject {
         return (ch(r), ch(g), ch(b))
     }
     func setNight(_ on: Bool) {
-        guard night != on else { return }
+        guard night != on else { Store.log("night \(on ? "on" : "off"): already so"); return }
         night = on
         Store.log("night " + (on ? "on: only ⌃⌥⌘F1 lit, lowest" : "off: the bank back"))
+        paintQueued = false      // v32: never let a stuck flag swallow the night paint
+        wire.reopen()            // v32: the keyboard opened from nothing, a stale handle cannot fail it silently
         paintAll()
         let mask = UInt8(!on && s.mLight ? 1 << (s.active - 1) : 0)
         wire.run { kb in
@@ -242,7 +244,8 @@ final class Store: ObservableObject {
         if !(1...3).contains(s.active) { s.active = 1 }
         wire.onError = { [weak self] e in
             Store.log("error: \(e)")
-            Task { @MainActor in self?.connected = false; self?.error = e }
+            // v32: a paint job that died before it ran left paintQueued true for ever, and every later paint was dropped
+            Task { @MainActor in self?.connected = false; self?.error = e; self?.paintQueued = false }
         }
         // a keyboard (re)opened has lost nothing we know of, but its RAM may have been reset while we were away
         wire.onOpen = { [weak self] in

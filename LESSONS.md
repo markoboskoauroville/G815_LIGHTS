@@ -155,3 +155,6 @@ action as a state change, not a click). v24 reads the bar through AX only for th
 The updater ran `./build.sh` on the Mac whenever main had a higher VERSION, against the 5.11.2026 rule (compile only on
 GitHub). v29 downloads the release and signs it "Mantra Apps" here; the designated requirement (identifier + Mantra Apps
 leaf) stays the same, so Input Monitoring and Accessibility survive (checked: "key tap on" after the update).
+
+## 9.11.2026: night call received, keyboard not changing
+The log showed every `night on/off` arriving, no error, the wire thread idle (sample): so the call reached the app and the paint did not reach the keys, with nothing to read back (no camera frame either). Two ways a paint can vanish silently: `paintQueued` stays true when the wire job dies before it runs (open failed), so every later paint is dropped; and a handle that went stale after a reconnect. v32: onError clears the flag, setNight clears it and reopens the keyboard from nothing, and the API now answers (`...night.ack`) so a caller can tell alive from silent. Not proven which of the two it was.

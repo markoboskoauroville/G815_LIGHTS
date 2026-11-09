@@ -36,6 +36,9 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         DistributedNotificationCenter.default().addObserver(forName: .init("community.auroville.g815lights.night"), object: nil, queue: .main) { [weak self] n in
             let on = (n.userInfo?["on"] as? String) == "1"
             MainActor.assumeIsolated { self?.store?.setNight(on) }
+            // v32: the answer, so the caller knows the API is alive (Screen Brightness Darkening v10 waits for it)
+            DistributedNotificationCenter.default().postNotificationName(.init("community.auroville.g815lights.night.ack"), object: nil,
+                userInfo: ["on": on ? "1" : "0"], deliverImmediately: true)
         }
         // the G815's light interface sits beside its keys, so macOS asks for Input Monitoring; this shows
         // the system's own question once (System Settings > Privacy & Security > Input Monitoring)
