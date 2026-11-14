@@ -158,3 +158,7 @@ leaf) stays the same, so Input Monitoring and Accessibility survive (checked: "k
 
 ## 9.11.2026: night call received, keyboard not changing
 The log showed every `night on/off` arriving, no error, the wire thread idle (sample): so the call reached the app and the paint did not reach the keys, with nothing to read back (no camera frame either). Two ways a paint can vanish silently: `paintQueued` stays true when the wire job dies before it runs (open failed), so every later paint is dropped; and a handle that went stale after a reconnect. v32: onError clears the flag, setNight clears it and reopens the keyboard from nothing, and the API now answers (`...night.ack`) so a caller can tell alive from silent. Not proven which of the two it was.
+
+## 14.11.2026: dictation names, and what "keyboard brightness" means
+- "GH15" (and similar) in Marko's dictation is the Logitech G815.
+- "Keyboard brightness" means the MacBook's own keyboard backlight, not the G815's lights. v33 misread it and stepped the G815; v34 steps the MacBook backlight (CoreBrightness KeyboardBrightnessClient, 10 % per Ctrl + wheel click). Ask or check which keyboard before building.
