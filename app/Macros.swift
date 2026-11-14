@@ -236,11 +236,12 @@ final class Macros: ObservableObject {
         }
     }
 
-    // ------------------------------------------------------------ v33: Ctrl + the volume wheel = keyboard brightness
+    // ------------------------------------------------------------ v33: Ctrl + the volume wheel = the MacBook's own keyboard backlight
     /// NSSystemDefined (type 14), subtype 8: the media keys. data1 = key << 16 | state << 8; key 0 = volume up,
-    /// 1 = volume down; state 0xA = down, 0xB = up. With Control held the wheel steps the G815's brightness through
-    /// its five levels (Marko, 14.11.2026) and the volume does not move; without Control nothing here is touched.
+    /// 1 = volume down; state 0xA = down, 0xB = up. With Control held the wheel steps the MacBook's built-in keyboard backlight
+    /// by 10 % (Marko, 14.11.2026; the G815 lights are not touched) and the volume does not move; without Control nothing here is touched.
     static let sysDefined = 14
+    // MacBacklight: see below
     private var brightHeld = Set<Int>()
     private func volumeWheel(_ ev: CGEvent) -> Bool {
         guard let ns = NSEvent(cgEvent: ev), ns.subtype.rawValue == 8 else { return false }
@@ -250,13 +251,7 @@ final class Macros: ObservableObject {
         if !down { return brightHeld.remove(key) != nil }          // the matching release of a swallowed press
         guard ev.flags.contains(.maskControl) else { return false }
         brightHeld.insert(key)
-        let steps = Store.brightSteps
-        let now = Store.level(store.brightness)
-        let next = max(0, min(steps.count - 1, now + (key == 0 ? 1 : -1)))
-        if next != now {
-            store.setBrightness(steps[next])
-            say("keyboard brightness \(steps[next]) %")
-        }
+        if let v = MacBacklight.step(key == 0 ? 0.1 : -0.1) { say("MacBook keyboard backlight \(Int((v * 100).rounded())) %") }
         return true
     }
 
@@ -490,4 +485,33 @@ final class Macros: ObservableObject {
     /// the free per-key indexes (2e 61 63–67) lights it. So the window shows it: MR on the drawing turns red while
     /// waiting and recording (Views.swift); the keyboard's MR stays dark.
     private func mrLight(_ on: Bool) {}
+}
+
+/// v34: the MacBook's built-in keyboard backlight through the private CoreBrightness KeyboardBrightnessClient
+/// (brightnessForKeyboard: / setBrightness:forKeyboard:, 0...1). Proven on macOS 15 on 14.11.2026.
+enum MacBacklight {
+    private typealias Get = @convention(c) (AnyObject, Selector, UInt64) -> Float
+    private typealias Put = @convention(c) (AnyObject, Selector, Float, UInt64) -> Bool
+    private static let client: NSObject? = {
+        guard dlopen("/System/Library/PrivateFrameworks/CoreBrightness.framework/CoreBrightness", RTLD_NOW) != nil,
+              let cls = NSClassFromString("KeyboardBrightnessClient") as? NSObject.Type else { return nil }
+        return cls.init()
+    }()
+    private static let kid: UInt64 = {
+        if let a = client?.perform(Selector(("copyKeyboardBacklightIDs")))?.takeUnretainedValue() as? [NSNumber], let f = a.first { return f.uint64Value }
+        return 1
+    }()
+    static func get() -> Float? {
+        guard let c = client else { return nil }
+        let sel = Selector(("brightnessForKeyboard:"))
+        return unsafeBitCast(c.method(for: sel), to: Get.self)(c, sel, kid)
+    }
+    /// change by delta (0.1 = 10 %), clamped; returns the new value
+    static func step(_ delta: Float) -> Float? {
+        guard let c = client, let now = get() else { return nil }
+        let v = max(0, min(1, (now * 10).rounded() / 10 + delta))
+        let sel = Selector(("setBrightness:forKeyboard:"))
+        _ = unsafeBitCast(c.method(for: sel), to: Put.self)(c, sel, v, kid)
+        return v
+    }
 }
