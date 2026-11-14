@@ -1,5 +1,7 @@
 # TAKEOVER — G815 Lights on a Mac
 
+**14.11.2026: v33** adds Ctrl + the volume wheel = keyboard brightness, one of five levels (app/Macros.swift, volumeWheel); needs Accessibility like the macros.
+
 **State 5.11.2026: v29** (GitHub release, installed into build/ where the login agent runs it, signed "Mantra Apps"):
 right-click any key in the drawing → REPLACE WITH THE NEXT KEY I PRESS / REPLACE WITH › (groups) / BACK TO; per bank
 (`Bank.remaps`, key id → Mac key code), G1–G5 too, the cap shows →NEW; modifiers, media keys and ☼ cannot be replaced.

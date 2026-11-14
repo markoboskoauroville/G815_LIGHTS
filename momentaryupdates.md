@@ -273,4 +273,4 @@ Status: Darken v10 (starts G815 Lights if down, waits for its answer, restarts i
 > it's very strange. It's not appearing. It's enabled, but it's not appearing. I think the issue is that the Now Playing song somehow covers this control. This is reminding me that I need to have some workaround, and my workaround will be to use my volume rocker on my GH15. You need to use that application which controls my keyboard GH15. When I press Control and Volume at the same time, I am actually changing the brightness of the screen of the keyboard
 
 Reading: GH15 = Logitech G815 (this app; its volume wheel sends the normal volume keys). Ctrl + wheel up/down = keyboard brightness one of the five levels up/down; plain wheel stays volume.
-Status: in progress (v33).
+Status: v33 built (run 43637008441 green), installed, signed Mantra Apps; simulated Ctrl+wheel 25 to 50 to 25 read back with build/g815. Waiting for Marko to press the real wheel.
