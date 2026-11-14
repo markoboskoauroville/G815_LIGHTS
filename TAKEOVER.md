@@ -1,6 +1,6 @@
 # TAKEOVER — G815 Lights on a Mac
 
-**14.11.2026: v33** adds Ctrl + the volume wheel = keyboard brightness, one of five levels (app/Macros.swift, volumeWheel); needs Accessibility like the macros.
+**14.11.2026: v34** Ctrl + the volume wheel = the MacBook's OWN keyboard backlight, 10 % a click (app/Macros.swift volumeWheel + MacBacklight, private CoreBrightness KeyboardBrightnessClient); v33's G815-lights version was a misreading; needs Accessibility like the macros.
 
 **State 5.11.2026: v29** (GitHub release, installed into build/ where the login agent runs it, signed "Mantra Apps"):
 right-click any key in the drawing → REPLACE WITH THE NEXT KEY I PRESS / REPLACE WITH › (groups) / BACK TO; per bank

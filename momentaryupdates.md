@@ -279,4 +279,4 @@ Status: v33 built (run 43637008441 green), installed, signed Mantra Apps; simula
 
 > I didn't mean the brightness of the G keyboard on the Mac keyboard. You didn't understand me, right? Please change this behavior.
 
-Reading: Ctrl + the G815 volume wheel changes the MacBook's built-in keyboard backlight (about 10 % per click); the G815 lights are left alone. Status: in progress (v34).
+Reading: Ctrl + the G815 volume wheel changes the MacBook's built-in keyboard backlight (about 10 % per click); the G815 lights are left alone. Status: v34 built (run 43637391562 green), installed, signed Mantra Apps; simulated Ctrl+wheel read back 0.0 > 0.1 > 0.2 > 0.1 > 0.0. Waiting for Marko to press the real wheel.
