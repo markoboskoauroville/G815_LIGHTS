@@ -274,3 +274,9 @@ Status: Darken v10 (starts G815 Lights if down, waits for its answer, restarts i
 
 Reading: GH15 = Logitech G815 (this app; its volume wheel sends the normal volume keys). Ctrl + wheel up/down = keyboard brightness one of the five levels up/down; plain wheel stays volume.
 Status: v33 built (run 43637008441 green), installed, signed Mantra Apps; simulated Ctrl+wheel 25 to 50 to 25 read back with build/g815. Waiting for Marko to press the real wheel.
+
+## 14.11.2026 — correction: the MacBook's own keyboard backlight, not the G815
+
+> I didn't mean the brightness of the G keyboard on the Mac keyboard. You didn't understand me, right? Please change this behavior.
+
+Reading: Ctrl + the G815 volume wheel changes the MacBook's built-in keyboard backlight (about 10 % per click); the G815 lights are left alone. Status: in progress (v34).
