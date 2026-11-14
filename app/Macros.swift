@@ -183,7 +183,7 @@ final class Macros: ObservableObject {
     }
 
     private func makeTap() {
-        let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
+        let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue) | (1 << Macros.sysDefined)
         guard let t = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
                                         eventsOfInterest: CGEventMask(mask), callback: { _, type, ev, ctx in
             let me = Unmanaged<Macros>.fromOpaque(ctx!).takeUnretainedValue()
@@ -205,6 +205,7 @@ final class Macros: ObservableObject {
             return false
         }
         if ev.getIntegerValueField(.eventSourceUserData) == KeyCodes.magic { return false }
+        if type.rawValue == UInt32(Macros.sysDefined) { return volumeWheel(ev) }
         let code = Int(ev.getIntegerValueField(.keyboardEventKeycode))
         switch type {
         case .keyDown:
@@ -233,6 +234,30 @@ final class Macros: ObservableObject {
         default:
             return false
         }
+    }
+
+    // ------------------------------------------------------------ v33: Ctrl + the volume wheel = keyboard brightness
+    /// NSSystemDefined (type 14), subtype 8: the media keys. data1 = key << 16 | state << 8; key 0 = volume up,
+    /// 1 = volume down; state 0xA = down, 0xB = up. With Control held the wheel steps the G815's brightness through
+    /// its five levels (Marko, 14.11.2026) and the volume does not move; without Control nothing here is touched.
+    static let sysDefined = 14
+    private var brightHeld = Set<Int>()
+    private func volumeWheel(_ ev: CGEvent) -> Bool {
+        guard let ns = NSEvent(cgEvent: ev), ns.subtype.rawValue == 8 else { return false }
+        let key = (ns.data1 & 0xFFFF0000) >> 16
+        guard key == 0 || key == 1 else { return false }
+        let down = ((ns.data1 & 0xFF00) >> 8) == 0xA
+        if !down { return brightHeld.remove(key) != nil }          // the matching release of a swallowed press
+        guard ev.flags.contains(.maskControl) else { return false }
+        brightHeld.insert(key)
+        let steps = Store.brightSteps
+        let now = Store.level(store.brightness)
+        let next = max(0, min(steps.count - 1, now + (key == 0 ? 1 : -1)))
+        if next != now {
+            store.setBrightness(steps[next])
+            say("keyboard brightness \(steps[next]) %")
+        }
+        return true
     }
 
     // ------------------------------------------------------------ the keyboard's own keys (HID++)
