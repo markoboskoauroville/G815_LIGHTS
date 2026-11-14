@@ -267,3 +267,10 @@ Then: "my app is logitech keyboard controller on this device g815 written in swi
 ## 9.11.2026: the keyboard no longer follows the darkening
 Marko: "Please look at the code that darkens the screen. Now it doesn't change my keyboard any more. The screen goes up and down in brightness, but the keyboard is not reacting." Then: "That's the mystery: G815 Lights is running, but it's not doing the thing." Then: "For the future, make the darkening app kick in G815 Lights if it is not running."
 Status: Darken v10 (starts G815 Lights if down, waits for its answer, restarts it once if silent, log ~/.darken/log.txt) and G815 Lights v32 (answers the night API, reopens the keyboard from nothing for every night call, a stuck paint flag can no longer swallow paints). Built by GitHub Actions; waiting for Marko to press ⌃⌥⌘F1 twice.
+
+## 14.11.2026 — Control + the volume wheel changes the keyboard's brightness
+
+> it's very strange. It's not appearing. It's enabled, but it's not appearing. I think the issue is that the Now Playing song somehow covers this control. This is reminding me that I need to have some workaround, and my workaround will be to use my volume rocker on my GH15. You need to use that application which controls my keyboard GH15. When I press Control and Volume at the same time, I am actually changing the brightness of the screen of the keyboard
+
+Reading: GH15 = Logitech G815 (this app; its volume wheel sends the normal volume keys). Ctrl + wheel up/down = keyboard brightness one of the five levels up/down; plain wheel stays volume.
+Status: in progress (v33).
