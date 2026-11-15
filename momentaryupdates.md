@@ -300,3 +300,11 @@ Status: coding v36.
 
 Reading: "GH15 controller" = G815 Lights. Find every source of the idle light show and remove it; build into G815 Lights a switch "Light show after 5 min of inactivity" (idle time adjustable, which show, START NOW, STOP); activity stops it and the normal profile returns.
 Status: coding v38.
+
+## 15.11.2026 — the light show row is amateurish
+
+> "Something is still running the light show when I'm idle. I open my GH1.5 program, it says light show, after 5 minutes of inactivity, off. And it's not off, it's on. And this is additional setting which is not so important. And what's happening now? It's at the top. Come on. Again, correct all possible [apps] we are working. any additional not so important stuff go to the bottom we going the top is most used settings bottom is less used and I don't have my switches I told you Mac switches so I want to see here light show, switch on off I understand, after 5 minutes of inactivity that's the just explanation small letters in parenthesis you set off, no need, you have a switch plus, minus, I don't know what this does, aha, it's minutes okay, but plus, minus is so far away from minutes I don't understand, I'm doing minutes and I have different presets, okay, that's nice there should be also auto, there is all, not all say auto, because then you randomly change it start now, okay, stop, okay, but stop is is not needed because I have a switch to stop it. And there is another off at the end of that line. This is amateurish work. Please fix my GH15."
+
+1. LIGHT SHOW row to the bottom, real macOS switch, caption (after N min of inactivity), − N MIN + together, AUTO (RANDOM), START NOW, no STOP, no stray OFF. — **Status:** v39
+2. Something still ran the show while idle. — **Status:** the log shows POSTs from Python-urllib / curl at 13:37–13:38 (a worker testing Queen commands), no other sender; v39 also stops an idle show the moment the switch is OFF.
+3. Other on/off choices as switches (header ON/OFF, LOCK, DELAYS). — **Status:** v39

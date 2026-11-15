@@ -173,3 +173,5 @@ The log showed every `night on/off` arriving, no error, the wire thread idle (sa
 - 15.11.2026 (v36): the one place that sees every key is the Macros tap, and the one place that owns the LEDs is LightShow; the pause lives in LightShow so every source (stream, frame, show) obeys it without changing Meditation Room.
 
 - (15.11.2026, v38) Never store a command to replay it later: the 300 s "resume" of v36 remembered a 20 s pattern and made it endless, which Marko saw as "my keyboard starts a light show when I am away". Anything that starts by itself needs a visible switch in the window, default OFF.
+
+- (15.11.2026, v39) A rarely used setting goes at the bottom, not under the board; on/off is a macOS switch, never words with a bar between; a value and its −/+ sit together. When a light starts 'by itself', read ~/.g815/log.txt for the `from <agent>` of every POST before blaming the app: tests by other workers look like a ghost.

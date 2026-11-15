@@ -8,7 +8,7 @@
 import SwiftUI
 import IOKit.hid
 
-let VERSION = 38
+let VERSION = 39
 /// v22 (Marko, 30.10.2026: "If permissions are not set, it needs to have text in the top right"): PERMISSIONS.
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
@@ -424,8 +424,10 @@ struct MainView: View {
                 // v21, ON / OFF first (Marko, 19.10.2026: "In the top of every user interface, there will now be an on/off
                 // switch"): running is ON; OFF gives the keyboard its own mode back (applicationWillTerminate) and quits.
                 // The login agent has no KeepAlive, so OFF stays off until the next login.
-                Word(text: "ON", state: .on) {}
-                Word(text: "OFF", state: .off) { NSApp.terminate(nil) }
+                Toggle(isOn: Binding(get: { true }, set: { if !$0 { NSApp.terminate(nil) } })) { EmptyView() }
+                    .toggleStyle(.switch).tint(Color.on).labelsHidden()
+                    .accessibilityLabel("Keeper on or off").accessibilityIdentifier("keeper-switch")
+                    .help("ON: the keeper runs; switching it OFF gives the keyboard its own mode back and quits")
                 Circle().fill(store.connected ? Color.on : Color(hex: "FF3B30")).frame(width: 8, height: 8)
                 Text(store.connected ? "G815 \(store.serial)" : (store.error.isEmpty ? "looking for the keyboard" : store.error))
                     .font(mono(11, .regular)).foregroundColor(.dimSand).lineLimit(1)
@@ -457,7 +459,7 @@ struct MainView: View {
                 Spacer()
                 Toggle(isOn: Binding(get: { store.s.locked }, set: { store.setLocked($0) })) {
                     Text("LOCK M\(store.s.active): M keys on the keyboard do nothing").font(mono(11, .regular)).foregroundColor(.sand)
-                }.toggleStyle(.checkbox)
+                }.toggleStyle(.switch)
             }
             Board(store: store, sel: $sel, mode: mode,
                   mrColor: macros.rec != .idle ? Color(hex: "FF3B30") : Color.bankYellow.opacity(macroView ? 1 : 0.32),
@@ -485,23 +487,6 @@ struct MainView: View {
                 Text(mode == .single ? (sel.isEmpty ? "click one key" : "\(store.layout.keys.first { sel.contains($0.id) }?.l ?? "") chosen · one key at a time")
                      : mode == .lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
                      : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
-            }
-            // v38: the light show on his switch (IdleShow.swift): off by default; ON starts it after the minutes of no key and no mouse
-            HStack(spacing: 4) {
-                label("LIGHT SHOW").padding(.trailing, 6)
-                Word(text: "AFTER \(idle.minutes) MIN OF INACTIVITY: " + (idle.on ? "ON" : "OFF"), state: idle.on ? .on : .off) { idle.toggle() }
-                    .help("ON: when no key and no mouse for the minutes set, the keyboard plays the show; any key or mouse stops it and your colours come back")
-                Word(text: "−", state: .sand, size: 15) { idle.adjust(-1) }.help("one minute less")
-                Word(text: "+", state: .sand, size: 15) { idle.adjust(1) }.help("one minute more")
-                label("SHOW").padding(.leading, 10)
-                Word(text: "‹", state: .sand, size: 15) { idle.next(-1) }
-                Text(idle.show.uppercased()).font(mono(12, .regular)).foregroundColor(.sand).frame(minWidth: 84)
-                Word(text: "›", state: .sand, size: 15) { idle.next(1) }
-                Word(text: "START NOW", state: .amber) { idle.startNow() }
-                Word(text: "STOP", state: idle.running ? .on : .off) { idle.stopNow() }
-                Text(idle.running ? "playing · a key stops it" : (idle.on ? "waiting · no activity for \(idle.idleNow) s" : "off"))
-                    .font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
-                Spacer()
             }
             if macroView {
                 MacroPanel(store: store, macros: macros, chosen: sel.count == 1 ? sel.first : nil)
@@ -579,6 +564,38 @@ struct MainView: View {
                         .help("M1–M3 have no brightness of their own: lit, they follow KEYBOARD BRIGHTNESS. MR's light cannot be set.")
                 }
             }
+            }
+            // v39 (Marko, 15.11.2026): LESS USED, so at the BOTTOM. A real switch, minutes right beside − / +, AUTO picks at random,
+            // START NOW; no STOP (the switch stops it), no stray OFF. Caption follows the minutes.
+            Rectangle().fill(Color.dead.opacity(0.6)).frame(height: 1)
+            HStack(alignment: .center, spacing: 18) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Toggle(isOn: Binding(get: { idle.on }, set: { idle.setOn($0) })) {
+                        Text("LIGHT SHOW").font(mono(13)).tracking(0.5).foregroundColor(idle.on ? .on : .off)
+                    }.toggleStyle(.switch).tint(Color.on)
+                        .accessibilityLabel("Light show").accessibilityIdentifier("lightshow-switch")
+                        .help("ON: when no key and no mouse for the minutes set, the keyboard plays the show; any key or mouse stops it and your colours come back")
+                    Text("(after \(idle.minutes) min of inactivity)").font(mono(10, .regular)).foregroundColor(.dimSand)
+                }
+                HStack(spacing: 2) {
+                    Word(text: "−", state: .sand, size: 15) { idle.adjust(-1) }.help("one minute less")
+                        .accessibilityLabel("One minute less").accessibilityIdentifier("lightshow-minus")
+                    Text("\(idle.minutes) MIN").font(mono(12, .regular)).foregroundColor(.sand).frame(minWidth: 52)
+                    Word(text: "+", state: .sand, size: 15) { idle.adjust(1) }.help("one minute more")
+                        .accessibilityLabel("One minute more").accessibilityIdentifier("lightshow-plus")
+                }
+                HStack(spacing: 2) {
+                    Word(text: "‹", state: .sand, size: 15) { idle.next(-1) }.accessibilityLabel("Previous show").accessibilityIdentifier("lightshow-prev")
+                    Text(idle.showTitle).font(mono(12, .regular)).foregroundColor(.sand).frame(minWidth: 118)
+                        .accessibilityLabel("Show: \(idle.showTitle)")
+                    Word(text: "›", state: .sand, size: 15) { idle.next(1) }.accessibilityLabel("Next show").accessibilityIdentifier("lightshow-next")
+                }
+                Word(text: "START NOW", state: .amber) { idle.startNow() }
+                    .accessibilityLabel("Start the light show now").accessibilityIdentifier("lightshow-start")
+                if idle.running || idle.on {
+                    Text(idle.running ? "running · a key stops it" : "waiting").font(mono(11, .regular)).foregroundColor(.dimSand)
+                }
+                Spacer(minLength: 0)
             }
         }
         // the RECHECK report floats over the board, so the window's layout never grows (inline, it blanked the window)

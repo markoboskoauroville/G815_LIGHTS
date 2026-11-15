@@ -94,7 +94,7 @@ struct MacroPanel: View {
                     Word(text: recording ? "STOP" : "RECORD", state: recording ? red : (macros.rec == .idle ? .amber : .dead)) {
                         if recording { macros.stop() } else { macros.recordInto(m.uid) }
                     }.help("records what you type (it replaces the steps); STOP, or MR, ends it")
-                    Toggle(isOn: $macros.keepDelays) { Text("DELAYS").font(mono(11, .regular)).foregroundColor(.sand) }.toggleStyle(.checkbox)
+                    Toggle(isOn: $macros.keepDelays) { Text("DELAYS").font(mono(11, .regular)).foregroundColor(.sand) }.toggleStyle(.switch)
                         .help("keep the time between keys as recorded")
                     Word(text: "PLAY", state: .on) { macros.run(m) }.help("plays it now, into the app in front")
                     Spacer()

@@ -58,7 +58,8 @@ final class IdleShow: ObservableObject, @unchecked Sendable {
         idleNow = Int(idle)
         let ls = LightShow.shared
         if running {
-            if !ls.active { running = false; manual = false; return }                 // a key, /stop or STOP ended it
+            if !ls.active { running = false; manual = false; return }
+            if !manual && !on { ls.stop(); running = false; Store.log("idle show: switch is OFF, stopped"); return }                 // a key, /stop or STOP ended it
             if !manual && idle < 1.5 { ls.stop(); running = false; Store.log("idle show: stopped, he is back") }
             return
         }
@@ -77,6 +78,11 @@ final class IdleShow: ObservableObject, @unchecked Sendable {
     func startNow() { DispatchQueue.main.async { self.launch(manual: true) } }
     func stopNow() { LightShow.shared.stop(); DispatchQueue.main.async { self.running = false; self.manual = false } }
 
+    var showTitle: String { show == "all" ? "AUTO (RANDOM)" : show.uppercased() }
+    func setOn(_ v: Bool) {
+        on = v; Store.log("idle show: switch \(on ? "ON" : "OFF")")
+        if !v && running && !manual { LightShow.shared.stop(); running = false }      // OFF: nothing idle-triggered keeps running
+    }
     func toggle() { on.toggle(); Store.log("idle show: switch \(on ? "ON" : "OFF")") }
     func adjust(_ by: Int) { minutes = min(120, max(1, minutes + by)) }
     func next(_ by: Int) {
@@ -89,7 +95,7 @@ final class IdleShow: ObservableObject, @unchecked Sendable {
         DispatchQueue.main.async {
             if let v = o["on"] as? Bool { self.on = v }
             if let v = o["minutes"] as? Int { self.minutes = min(120, max(1, v)) }
-            if let v = o["show"] as? String, IdleShow.choices.contains(v) { self.show = v }
+            if var v = o["show"] as? String { if v == "auto" { v = "all" }; if IdleShow.choices.contains(v) { self.show = v } }
             Store.log("idle show: set over the API: on \(self.on), \(self.minutes) min, \(self.show)")
         }
     }
