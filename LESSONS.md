@@ -169,3 +169,5 @@ The log showed every `night on/off` arriving, no error, the wire thread idle (sa
 - A picture goes through the dead zone: a key shows nothing below 45, so the strongest channel is scaled into 46...255 and the other channels keep their proportion; under 2 % stays dark. Tunable by POST /config {gamma, gain, fit}.
 - The Iriun camera sees the E16, not the G815 (camsnap timed out, 15.11.2026); the keyboard check by camera is Marko's own, from the stream's camera.
 - A 4 s window on the F-row's seconds counter is the stale detector: if the binary seconds stop, the stream or the app is frozen.
+
+- 15.11.2026 (v36): the one place that sees every key is the Macros tap, and the one place that owns the LEDs is LightShow; the pause lives in LightShow so every source (stream, frame, show) obeys it without changing Meditation Room.

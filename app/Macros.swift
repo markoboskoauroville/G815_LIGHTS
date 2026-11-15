@@ -206,6 +206,7 @@ final class Macros: ObservableObject {
         }
         if ev.getIntegerValueField(.eventSourceUserData) == KeyCodes.magic { return false }
         if type.rawValue == UInt32(Macros.sysDefined) { return volumeWheel(ev) }
+        if type == .keyDown || type == .flagsChanged { LightShow.shared.keyPressed() }   // v36: typing stops the light show
         let code = Int(ev.getIntegerValueField(.keyboardEventKeycode))
         switch type {
         case .keyDown:

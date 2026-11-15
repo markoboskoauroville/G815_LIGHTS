@@ -111,6 +111,43 @@ final class LightShow: @unchecked Sendable {
         }
     }
 
+    // MARK: v36 yield to typing (Marko, 15.11.2026): any key stops the show, 5 minutes of quiet brings it back
+    private var pausedUntil = Date.distantPast
+    private var pauseGen = 0
+    private var resumeShow: (name: String, seconds: Double?, counter: Bool?)?
+    /// 300 s; ~/.mantra/g815-yield-seconds (a number) shortens it for a test, never set by default
+    static var yieldSeconds: Double {
+        if let t = try? String(contentsOfFile: NSString(string: "~/.mantra/g815-yield-seconds").expandingTildeInPath, encoding: .utf8),
+           let v = Double(t.trimmingCharacters(in: .whitespacesAndNewlines)), v > 0 { return v }
+        return 300
+    }
+    private var isPaused: Bool { Date() < pausedUntil }   // lock held
+
+    /// any real key on the Mac (Macros' tap calls this, off the main thread)
+    func keyPressed() {
+        let secs = Self.yieldSeconds
+        net.async { [self] in
+            lock.lock()
+            let wasActive = _active, first = !isPaused
+            if wasActive && mode == "show" && resumeShow == nil { resumeShow = (showName, showSeconds, showCounter) }
+            pausedUntil = Date().addingTimeInterval(secs)
+            pauseGen += 1
+            let gen = pauseGen
+            lock.unlock()
+            if wasActive { stop() }
+            if first || wasActive { Store.log("light show: paused on key (back after \(Int(secs)) s of quiet)") }
+            net.asyncAfter(deadline: .now() + secs + 0.05) { [self] in
+                lock.lock()
+                guard gen == pauseGen else { lock.unlock(); return }
+                pausedUntil = .distantPast
+                let r = resumeShow; resumeShow = nil
+                lock.unlock()
+                Store.log("light show: resumed after \(Int(secs)) s without a key")
+                if let r { _ = showCmd(name: r.name, seconds: r.seconds, counter: r.counter, ttl: nil) }
+            }
+        }
+    }
+
     func stop() {
         lock.lock()
         let was = _active
@@ -185,6 +222,7 @@ final class LightShow: @unchecked Sendable {
     func showCmd(name: String, seconds: Double?, counter: Bool?, ttl: Double?) -> [String: Any] {
         guard name == "all" || Shows.names.contains(name) else { return ["ok": false, "error": "unknown show", "shows": Shows.names + ["all"]] }
         lock.lock()
+        if isPaused { resumeShow = (name, seconds, counter); lock.unlock(); return ["ok": true, "show": name, "paused": true] }
         showName = name; showSeconds = max(2, seconds ?? 25); showCounter = counter ?? true; showStart = Date()
         until = (ttl ?? 0) > 0 ? Date().addingTimeInterval(ttl!) : nil
         activate("show")
@@ -196,6 +234,7 @@ final class LightShow: @unchecked Sendable {
     /// One frame by its keys (partial: the rest dark unless keep).
     func frameKeys(_ f: [UInt8: RGB], source: String, ttl: Double?) -> [String: Any] {
         lock.lock()
+        if isPaused { lock.unlock(); return ["ok": true, "keys": 0, "paused": true] }
         until = (ttl ?? 0) > 0 ? Date().addingTimeInterval(ttl!) : (source == "stream" ? Date().addingTimeInterval(5) : nil)
         activate(source == "stream" ? "stream" : "frame")
         lock.unlock()
@@ -219,7 +258,7 @@ final class LightShow: @unchecked Sendable {
         let recent = sentFrames.filter { now.timeIntervalSince($0) < 5 }.count
         var r: [String: Any] = ["ok": true, "active": _active, "mode": mode, "show": showName, "frames": frames,
                                 "fps": Double(recent) / 5, "keys": caps.count, "gamma": gamma, "gain": gain, "fit": fit,
-                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 35]
+                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 36, "paused": isPaused]
         r["last_frame_age"] = lastFrameAt == .distantPast ? -1 : now.timeIntervalSince(lastFrameAt)
         if !errorText.isEmpty { r["last_error"] = errorText }
         return r
