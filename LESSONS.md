@@ -162,3 +162,10 @@ The log showed every `night on/off` arriving, no error, the wire thread idle (sa
 ## 14.11.2026: dictation names, and what "keyboard brightness" means
 - "GH15" (and similar) in Marko's dictation is the Logitech G815.
 - "Keyboard brightness" means the MacBook's own keyboard backlight, not the G815's lights. v33 misread it and stepped the G815; v34 steps the MacBook backlight (CoreBrightness KeyboardBrightnessClient, 10 % per Ctrl + wheel click). Ask or check which keyboard before building.
+
+## 15.11.2026: the keyboard as a display (v35)
+- `g815 serve` (the HID++ wire opened by a second process) works beside the running app: paints from both land. So a script can drive the keys with no new build, but the app repaints its bank every 15 s (`poll`), so a script must resend all keys every few seconds. v35 puts the show inside the app and makes `Store.paint` stand aside while `LightShow.shared.active`.
+- Speed: 115 keys are 29 report writes plus a commit; sending only the keys that changed gives about 19 frames a second in the app (measured by its own status). Frames coalesce: only the newest waits for the wire.
+- A picture goes through the dead zone: a key shows nothing below 45, so the strongest channel is scaled into 46...255 and the other channels keep their proportion; under 2 % stays dark. Tunable by POST /config {gamma, gain, fit}.
+- The Iriun camera sees the E16, not the G815 (camsnap timed out, 15.11.2026); the keyboard check by camera is Marko's own, from the stream's camera.
+- A 4 s window on the F-row's seconds counter is the stale detector: if the binary seconds stop, the stream or the app is frozen.
