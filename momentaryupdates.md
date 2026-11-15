@@ -286,3 +286,10 @@ Reading: Ctrl + the G815 volume wheel changes the MacBook's built-in keyboard ba
 > Now at this moment, you need to create some kind of pattern in my keyboard GH15 [G815] because camera is pointing to that keyboard and then I can check if my stream is working or staled. Think about maybe 10 different patterns. ... So my lights are like a low resolution LED LCD display, displaying whatever the app is showing. ... we create the keyboard light control for my keyboard through my app already existing GH15 controller. So it needs to have new API commands for light shows, or displaying the pictures from basically converting bitmap image to image on the keyboard in the best possible way by limitation of the keyboard.
 
 Status: step 1 (script cycling 10 patterns through `build/g815 set`) in progress; step 2 (v35 API: frame, stream, show, stop, status) to follow.
+
+## 15.11.2026 — the light show yields to typing
+
+> for LED lights which are doing light show right now, they need to stop doing light show while I'm typing and then wait for five minutes to restart and bring back my original profile automatically as soon as I press any button
+
+Reading: the moment any key is pressed the light show (Meditation Room's stream, a show or a frame) stops at once and the normal G815 profile paints again; while he keeps typing it stays; after 300 s without a key the show resumes by itself (the stream simply is accepted again, a stored show command restarts). The Meditation Room sound is untouched. Owner: G815 Lights (it owns the keyboard LEDs and already has the key tap), v36.
+Status: coding v36.
