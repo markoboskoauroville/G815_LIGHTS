@@ -280,3 +280,9 @@ Status: v33 built (run 43637008441 green), installed, signed Mantra Apps; simula
 > I didn't mean the brightness of the G keyboard on the Mac keyboard. You didn't understand me, right? Please change this behavior.
 
 Reading: Ctrl + the G815 volume wheel changes the MacBook's built-in keyboard backlight (about 10 % per click); the G815 lights are left alone. Status: v34 built (run 43637391562 green), installed, signed Mantra Apps; simulated Ctrl+wheel read back 0.0 > 0.1 > 0.2 > 0.1 > 0.0. Waiting for Marko to press the real wheel.
+
+## 15.11.2026 — light show on the G815 as a liveness display for the camera
+
+> Now at this moment, you need to create some kind of pattern in my keyboard GH15 [G815] because camera is pointing to that keyboard and then I can check if my stream is working or staled. Think about maybe 10 different patterns. ... So my lights are like a low resolution LED LCD display, displaying whatever the app is showing. ... we create the keyboard light control for my keyboard through my app already existing GH15 controller. So it needs to have new API commands for light shows, or displaying the pictures from basically converting bitmap image to image on the keyboard in the best possible way by limitation of the keyboard.
+
+Status: step 1 (script cycling 10 patterns through `build/g815 set`) in progress; step 2 (v35 API: frame, stream, show, stop, status) to follow.
