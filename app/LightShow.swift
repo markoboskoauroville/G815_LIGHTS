@@ -185,7 +185,7 @@ final class LightShow: @unchecked Sendable {
             lock.lock(); sent = [:]; errorText = "\(error)"; lock.unlock(); throw error
         }
         lock.lock()
-        for (i, c) in f { sent[i] = c }
+        for (i, c) in f { sent[i] = c }; errorText = ""
         sentFrames.append(Date()); if sentFrames.count > 200 { sentFrames.removeFirst(100) }
         lock.unlock()
     }
@@ -258,7 +258,7 @@ final class LightShow: @unchecked Sendable {
         let recent = sentFrames.filter { now.timeIntervalSince($0) < 5 }.count
         var r: [String: Any] = ["ok": true, "active": _active, "mode": mode, "show": showName, "frames": frames,
                                 "fps": Double(recent) / 5, "keys": caps.count, "gamma": gamma, "gain": gain, "fit": fit,
-                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 36, "paused": isPaused]
+                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 37, "paused": isPaused]
         r["last_frame_age"] = lastFrameAt == .distantPast ? -1 : now.timeIntervalSince(lastFrameAt)
         if !errorText.isEmpty { r["last_error"] = errorText }
         return r
