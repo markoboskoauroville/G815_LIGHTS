@@ -51,6 +51,10 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             store = Store()
             store.start()
             store.followResolve()            // v26: the G-key of Resolve's current page lit, alone
+            // v35: the keyboard as a low-resolution display for other apps, HTTP 127.0.0.1:8877, stream :8878 (LightShow.swift)
+            LightShow.shared.start(wire: store.wire) { [weak self] in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.store?.paintAll("light show stopped") } }
+            }
             // every bank in the keyboard brought in line with the Mac's; a bank already so is not written
             for i in 1...3 { store.writeBank(i) }
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in

@@ -273,6 +273,7 @@ final class Store: ObservableObject {
     /// The keys are gathered and their colours read when the job runs, so a drag that changes them
     /// thirty times a second sends one or two reports, never a backlog.
     func paint(_ ids: [String]) {
+        if LightShow.shared.active { return }      // v35: a light show, frame or stream owns the keys (LightShow.swift)
         dirty.formUnion(ids)
         guard !paintQueued else { return }
         paintQueued = true

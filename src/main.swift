@@ -15,6 +15,7 @@ let NAMES: [UInt16: String] = [
 func run() throws {
     let args = Array(CommandLine.arguments.dropFirst())
     if args.first == "serve" { serve(); return }
+    if lightCLI(args) { return }       // v35: show, frame, stop, status, shows: the app's light API on 127.0.0.1:8877
     let kb = try G815()
     switch args.first ?? "features" {
     case "features":

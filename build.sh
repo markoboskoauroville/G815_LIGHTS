@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")"
 mkdir -p build
 WIRE="src/hidpp.swift src/lights.swift src/onboard.swift"
-swiftc -O -swift-version 5 -o build/g815 $WIRE src/serve.swift src/main.swift
+swiftc -O -swift-version 5 -o build/g815 $WIRE src/serve.swift src/lightclient.swift src/main.swift
 V=$(sed -n 's/^let VERSION = \([0-9]*\)/\1/p' app/Views.swift)
 APP="build/G815 Lights.app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
