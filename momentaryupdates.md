@@ -293,3 +293,10 @@ Status: step 1 (script cycling 10 patterns through `build/g815 set`) in progress
 
 Reading: the moment any key is pressed the light show (Meditation Room's stream, a show or a frame) stops at once and the normal G815 profile paints again; while he keeps typing it stays; after 300 s without a key the show resumes by itself (the stream simply is accepted again, a stored show command restarts). The Meditation Room sound is untouched. Owner: G815 Lights (it owns the keyboard LEDs and already has the key tap), v36.
 Status: coding v36.
+
+## 15.11.2026 (v38)
+
+> I don't know who is doing that, but after few minutes of I am not active, my keyboard start to make a light show. Whatever is doing, remove it, but you can add the same process inside my real application GH15 controller, and then inside give me a switch for light show after 5 minutes of an activity or start now.
+
+Reading: "GH15 controller" = G815 Lights. Find every source of the idle light show and remove it; build into G815 Lights a switch "Light show after 5 min of inactivity" (idle time adjustable, which show, START NOW, STOP); activity stops it and the normal profile returns.
+Status: coding v38.

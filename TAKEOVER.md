@@ -131,3 +131,6 @@ keyboard: an app writing to it directly is painted over within seconds (seen 8.1
 
 ## v32 (9.11.2026)
 The NIGHT API answers every call with the notification community.auroville.g815lights.night.ack; the keyboard is reopened from scratch on every night call (stale handle after a reconnect); the stuck paintQueued flag that dropped later paints is cleared. Log ~/.g815/log.txt.
+
+## v38 (15.11.2026): the idle light show on his switch
+Culprit: v36's stored "resume" (LightShow.swift) replayed, after 300 s of quiet and without its 20 s limit, any pattern a caller had once posted; Meditation Room (Mac v2, mode "both") posts a 20 s pattern every 5 minutes while its KEYBOARD LIGHTS are on. No launch agent, cron, Hammerspoon or G HUB was involved. The replay is removed. IdleShow.swift is now the only thing that starts a show by itself: window row LIGHT SHOW (switch AFTER n MIN OF INACTIVITY ON/OFF, default OFF; − +; show ‹ ›; START NOW; STOP). Idle = no key/mouse event (CGEventSource). Any key or mouse stops an idle show and the bank returns; START NOW stops at a key or STOP. API: POST /idle {on,minutes,show}, POST /idle/start, GET /idle; every POST is logged with its User-Agent in ~/.g815/log.txt. Test only: ~/.mantra/g815-idle-seconds replaces the minutes.

@@ -55,6 +55,7 @@ final class Delegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             LightShow.shared.start(wire: store.wire) { [weak self] in
                 DispatchQueue.main.async { MainActor.assumeIsolated { self?.store?.paintAll("light show stopped") } }
             }
+            IdleShow.shared.start()          // v38: his switch for the idle light show (default OFF)
             // every bank in the keyboard brought in line with the Mac's; a bank already so is not written
             for i in 1...3 { store.writeBank(i) }
             poll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in

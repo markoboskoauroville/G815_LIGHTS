@@ -8,7 +8,7 @@
 import SwiftUI
 import IOKit.hid
 
-let VERSION = 37
+let VERSION = 38
 /// v22 (Marko, 30.10.2026: "If permissions are not set, it needs to have text in the top right"): PERMISSIONS.
 /// v14: the app updates itself from GitHub (Update.swift); the version number still opens the page.
 /// where the version number top right takes him (v13, 8.10.2026: "clickable so it takes me to GitHub to download the
@@ -340,6 +340,7 @@ struct MainView: View {
     @ObservedObject var store: Store
     @ObservedObject var updater: Updater
     @ObservedObject var macros: Macros
+    @ObservedObject var idle = IdleShow.shared
     /// v15: MR opens the macros in place of the colours
     @State private var macroView = false
     /// v22: every permission allowed; read every 2 s, set only when it changed (a half-typed field is never wiped)
@@ -484,6 +485,23 @@ struct MainView: View {
                 Text(mode == .single ? (sel.isEmpty ? "click one key" : "\(store.layout.keys.first { sel.contains($0.id) }?.l ?? "") chosen · one key at a time")
                      : mode == .lasso ? (sel.isEmpty ? "drag a box around keys · shift adds · option takes away" : "\(sel.count) chosen · shift adds · option takes away")
                      : (sel.isEmpty ? "click or drag across keys" : "\(sel.count) chosen")).font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
+            }
+            // v38: the light show on his switch (IdleShow.swift): off by default; ON starts it after the minutes of no key and no mouse
+            HStack(spacing: 4) {
+                label("LIGHT SHOW").padding(.trailing, 6)
+                Word(text: "AFTER \(idle.minutes) MIN OF INACTIVITY: " + (idle.on ? "ON" : "OFF"), state: idle.on ? .on : .off) { idle.toggle() }
+                    .help("ON: when no key and no mouse for the minutes set, the keyboard plays the show; any key or mouse stops it and your colours come back")
+                Word(text: "−", state: .sand, size: 15) { idle.adjust(-1) }.help("one minute less")
+                Word(text: "+", state: .sand, size: 15) { idle.adjust(1) }.help("one minute more")
+                label("SHOW").padding(.leading, 10)
+                Word(text: "‹", state: .sand, size: 15) { idle.next(-1) }
+                Text(idle.show.uppercased()).font(mono(12, .regular)).foregroundColor(.sand).frame(minWidth: 84)
+                Word(text: "›", state: .sand, size: 15) { idle.next(1) }
+                Word(text: "START NOW", state: .amber) { idle.startNow() }
+                Word(text: "STOP", state: idle.running ? .on : .off) { idle.stopNow() }
+                Text(idle.running ? "playing · a key stops it" : (idle.on ? "waiting · no activity for \(idle.idleNow) s" : "off"))
+                    .font(mono(11, .regular)).foregroundColor(.dimSand).padding(.leading, 8)
+                Spacer()
             }
             if macroView {
                 MacroPanel(store: store, macros: macros, chosen: sel.count == 1 ? sel.first : nil)

@@ -171,3 +171,5 @@ The log showed every `night on/off` arriving, no error, the wire thread idle (sa
 - A 4 s window on the F-row's seconds counter is the stale detector: if the binary seconds stop, the stream or the app is frozen.
 
 - 15.11.2026 (v36): the one place that sees every key is the Macros tap, and the one place that owns the LEDs is LightShow; the pause lives in LightShow so every source (stream, frame, show) obeys it without changing Meditation Room.
+
+- (15.11.2026, v38) Never store a command to replay it later: the 300 s "resume" of v36 remembered a 20 s pattern and made it endless, which Marko saw as "my keyboard starts a light show when I am away". Anything that starts by itself needs a visible switch in the window, default OFF.

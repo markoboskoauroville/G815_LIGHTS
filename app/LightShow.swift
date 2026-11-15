@@ -10,6 +10,7 @@
 //   POST /show      {"name":"rainbow"|"all", "seconds":25, "counter":true}   (or POST /show/<name>)
 //   POST /stop      the bank's own colours come back
 //   POST /config    {"gamma":1.8,"gain":1.0,"fit":"stretch|contain|cover"}
+//   POST /idle      {"on":true,"minutes":5,"show":"all"}  the switch "light show after N min of inactivity" (v38); POST /idle/start = START NOW
 // Stream: TCP 127.0.0.1:8878, frames of 1 type byte (R raw RGB in /layout order, I image, J JSON) + 4 byte big-endian
 // length + payload, up to 30 per second; a stream silent for 5 s lets go of the lights.
 // While a show, frame or stream runs the app's own painting (banks, Resolve G-keys, night) stands aside.
@@ -111,10 +112,13 @@ final class LightShow: @unchecked Sendable {
         }
     }
 
-    // MARK: v36 yield to typing (Marko, 15.11.2026): any key stops the show, 5 minutes of quiet brings it back
+    // MARK: v36 yield to typing (Marko, 15.11.2026): any key stops the show; while he types, nothing from outside paints.
+    // v38 (15.11.2026): the stored "resume" is GONE. It was the culprit of the idle light show: a pattern once posted by any
+    // caller (Meditation Room's 20 s patterns, a test) was remembered and replayed, without its 20 s limit, after every
+    // 300 s of quiet. Now only IdleShow.swift (his switch in the window) starts a show by itself; a stream or /show from
+    // outside is simply accepted again when the pause is over.
     private var pausedUntil = Date.distantPast
     private var pauseGen = 0
-    private var resumeShow: (name: String, seconds: Double?, counter: Bool?)?
     /// 300 s; ~/.mantra/g815-yield-seconds (a number) shortens it for a test, never set by default
     static var yieldSeconds: Double {
         if let t = try? String(contentsOfFile: NSString(string: "~/.mantra/g815-yield-seconds").expandingTildeInPath, encoding: .utf8),
@@ -129,21 +133,18 @@ final class LightShow: @unchecked Sendable {
         net.async { [self] in
             lock.lock()
             let wasActive = _active, first = !isPaused
-            if wasActive && mode == "show" && resumeShow == nil { resumeShow = (showName, showSeconds, showCounter) }
             pausedUntil = Date().addingTimeInterval(secs)
             pauseGen += 1
             let gen = pauseGen
             lock.unlock()
             if wasActive { stop() }
-            if first || wasActive { Store.log("light show: paused on key (back after \(Int(secs)) s of quiet)") }
+            if first || wasActive { Store.log("light show: paused on key (outside shows and streams wait \(Int(secs)) s of quiet)") }
             net.asyncAfter(deadline: .now() + secs + 0.05) { [self] in
                 lock.lock()
                 guard gen == pauseGen else { lock.unlock(); return }
                 pausedUntil = .distantPast
-                let r = resumeShow; resumeShow = nil
                 lock.unlock()
-                Store.log("light show: resumed after \(Int(secs)) s without a key")
-                if let r { _ = showCmd(name: r.name, seconds: r.seconds, counter: r.counter, ttl: nil) }
+                Store.log("light show: pause over after \(Int(secs)) s without a key (nothing is replayed)")
             }
         }
     }
@@ -219,10 +220,12 @@ final class LightShow: @unchecked Sendable {
 
     // MARK: public commands (all return a JSON-able dictionary)
 
-    func showCmd(name: String, seconds: Double?, counter: Bool?, ttl: Double?) -> [String: Any] {
+    /// force: his own switch (IdleShow) starts through the key pause
+    func showCmd(name: String, seconds: Double?, counter: Bool?, ttl: Double?, force: Bool = false) -> [String: Any] {
         guard name == "all" || Shows.names.contains(name) else { return ["ok": false, "error": "unknown show", "shows": Shows.names + ["all"]] }
         lock.lock()
-        if isPaused { resumeShow = (name, seconds, counter); lock.unlock(); return ["ok": true, "show": name, "paused": true] }
+        if force { pausedUntil = .distantPast; pauseGen += 1 }
+        if isPaused { lock.unlock(); return ["ok": true, "show": name, "paused": true] }
         showName = name; showSeconds = max(2, seconds ?? 25); showCounter = counter ?? true; showStart = Date()
         until = (ttl ?? 0) > 0 ? Date().addingTimeInterval(ttl!) : nil
         activate("show")
@@ -258,7 +261,8 @@ final class LightShow: @unchecked Sendable {
         let recent = sentFrames.filter { now.timeIntervalSince($0) < 5 }.count
         var r: [String: Any] = ["ok": true, "active": _active, "mode": mode, "show": showName, "frames": frames,
                                 "fps": Double(recent) / 5, "keys": caps.count, "gamma": gamma, "gain": gain, "fit": fit,
-                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 37, "paused": isPaused]
+                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 38, "paused": isPaused,
+                                "idle_show": IdleShow.shared.statusDict()]
         r["last_frame_age"] = lastFrameAt == .distantPast ? -1 : now.timeIntervalSince(lastFrameAt)
         if !errorText.isEmpty { r["last_error"] = errorText }
         return r
@@ -543,7 +547,15 @@ final class HTTPConn {
                 if p.count == 2 { query[p[0]] = p[1].removingPercentEncoding ?? p[1] }
             }
         }
+        if method == "POST" || path == "/stop" {   // v38: who calls (the culprit hunt of 15.11.2026)
+            Store.log("light show: \(method) \(path) from \(hdr["user-agent"] ?? "an unnamed client")")
+        }
         switch (method, path) {
+        case ("POST", "/idle"):
+            let o = (try? JSONSerialization.jsonObject(with: body) as? [String: Any]) ?? [:]
+            IdleShow.shared.apply(o); return (200, IdleShow.shared.statusDict())
+        case ("POST", "/idle/start"): IdleShow.shared.startNow(); return (200, ["ok": true])
+        case ("GET", "/idle"): return (200, IdleShow.shared.statusDict())
         case ("GET", "/status"), ("GET", "/"), ("GET", "/health"): return (200, ls.status())
         case ("GET", "/layout"): return (200, ls.layoutJSON())
         case ("GET", "/shows"): return (200, ["ok": true, "shows": Shows.names, "also": "all (every show in turn)"])
@@ -569,7 +581,7 @@ final class HTTPConn {
                                    counter: query["counter"].map { $0 != "0" }, ttl: Double(query["ttl"] ?? ""))
                 return (r["ok"] as? Bool == true ? 200 : 400, r)
             }
-            return (404, ["ok": false, "error": "GET /status /layout /shows, POST /frame /show /stop /config"])
+            return (404, ["ok": false, "error": "GET /status /layout /shows /idle, POST /frame /show /stop /config /idle /idle/start"])
         }
     }
 
