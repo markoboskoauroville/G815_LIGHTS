@@ -261,7 +261,7 @@ final class LightShow: @unchecked Sendable {
         let recent = sentFrames.filter { now.timeIntervalSince($0) < 5 }.count
         var r: [String: Any] = ["ok": true, "active": _active, "mode": mode, "show": showName, "frames": frames,
                                 "fps": Double(recent) / 5, "keys": caps.count, "gamma": gamma, "gain": gain, "fit": fit,
-                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": 38, "paused": isPaused,
+                                "http_port": Int(Self.httpPort), "stream_port": Int(Self.streamPort), "version": VERSION, "paused": isPaused,
                                 "idle_show": IdleShow.shared.statusDict()]
         r["last_frame_age"] = lastFrameAt == .distantPast ? -1 : now.timeIntervalSince(lastFrameAt)
         if !errorText.isEmpty { r["last_error"] = errorText }
